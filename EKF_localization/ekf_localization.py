@@ -2,7 +2,7 @@
 import numpy as np
 import scipy
 import scipy.signal
-import control
+# import control
 import random
 import math
 import matplotlib.pyplot as plt
@@ -38,6 +38,8 @@ def main():
             x.append(x_new)
             y.append(y_new)
             th.append(th_new)
+
+    # animation(self, x, y, th)
 
     
 
