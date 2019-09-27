@@ -6,10 +6,11 @@ import scipy.signal
 import random
 import math
 import matplotlib.pyplot as plt
+from matplotlib import animation
 # import scipy.io as sio
 from IPython.core.debugger import set_trace
 # from sympy import Symbol, Derivative
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
 
 class rob_2wh:
     def __init__(self):
@@ -53,39 +54,59 @@ class rob_2wh:
         ym = -10
         yM = 10
 
-        N = 50
-        s = np.linspace(-1, 1, N)
-        xx = s+s**2
-        yy = s-s**2
+        # First set up the figure, the axis, and the plot element we want to animate
+        fig = plt.figure()
+        ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
+        line, = ax.plot([], [], lw=2)
 
-        # Create figure
-        fig = go.Figure(
-            data=[go.Scatter(x=x, y=y,
-                             mode="lines",
-                             line=dict(width=2, color="blue")),
-                  go.Scatter(x=x, y=y,
-                             mode="lines",
-                             line=dict(width=2, color="blue"))],
-            layout=go.Layout(
-                xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
-                yaxis=dict(range=[ym, yM], autorange=False, zeroline=False),
-                title_text="Kinematic Generation of a Planar Curve", hovermode="closest",
-                updatemenus=[dict(type="buttons",
-                                  buttons=[dict(label="Play",
-                                                method="animate",
-                                                args=[None])])]),
-            frames=[go.Frame(
-                data=[go.Scatter(
-                    x=[xx[k]],
-                    y=[yy[k]],
-                    mode="markers",
-                    marker=dict(color="red", size=10))])
+        # call the animator.  blit=True means only re-draw the parts that have changed.
+        anim = animation.FuncAnimation(fig, self.animate, init_func=self.animation_init(line),
+                               frames=200, interval=20, blit=True)
 
-                for k in range(N)]
-        )
+        plt.show()
+        # N = 50
+        # s = np.linspace(-1, 1, N)
+        # xx = s+s**2
+        # yy = s-s**2
+        #
+        # # Create figure
+        # fig = go.Figure(
+        #     data=[go.Scatter(x=x, y=y,
+        #                      mode="lines",
+        #                      line=dict(width=2, color="blue")),
+        #           go.Scatter(x=x, y=y,
+        #                      mode="lines",
+        #                      line=dict(width=2, color="blue"))],
+        #     layout=go.Layout(
+        #         xaxis=dict(range=[xm, xM], autorange=False, zeroline=False),
+        #         yaxis=dict(range=[ym, yM], autorange=False, zeroline=False),
+        #         title_text="Kinematic Generation of a Planar Curve", hovermode="closest",
+        #         updatemenus=[dict(type="buttons",
+        #                           buttons=[dict(label="Play",
+        #                                         method="animate",
+        #                                         args=[None])])]),
+        #     frames=[go.Frame(
+        #         data=[go.Scatter(
+        #             x=[xx[k]],
+        #             y=[yy[k]],
+        #             mode="markers",
+        #             marker=dict(color="red", size=10))])
+        #
+        #         for k in range(N)]
+        # )
+        #
+        # fig.show()
 
-        fig.show()
+    # initialization function: plot the background of each frame
+    def animation_init(self, line):
+        line.set_data([], [])
+        return line,
 
+    def animate(self, i):
+        x = np.linspace(0, 2, 1000)
+        y = np.sin(2 * np.pi * (x - 0.01 * i))
+        line.set_data(x, y)
+        return line,
 
     def simulate_sensor(self, x, y, th, mark):
         # if no sensory data is given you have to simulate it below.

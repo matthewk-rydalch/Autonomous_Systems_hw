@@ -8,10 +8,12 @@ import math
 import matplotlib.pyplot as plt
 from IPython.core.debugger import set_trace
 from rob_2wh import rob_2wh
+from animator2 import animator
 
 def main():
 
     rob = rob_2wh()
+    animate = animator()
 
     t = []
     vc = []
@@ -39,9 +41,11 @@ def main():
             y.append(y_new)
             th.append(th_new)
 
-    # animation(self, x, y, th)
+    animate.animator(x, y, th, elements)
 
-    
+    return(x, y, th)
+
+
 
 
     # tf = 50.0
@@ -123,4 +127,4 @@ def main():
 #
 
 if __name__ == '__main__':
-	 main()
+	 [x, y, th] = main()
