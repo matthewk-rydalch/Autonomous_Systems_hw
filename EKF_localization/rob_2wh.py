@@ -121,7 +121,6 @@ class rob_2wh:
         # z_r1_tru = self.landmark1-np.array([[x],[y]])
         # z_r2_tru = self.landmark2-np.array([[x],[y]])
         # z_r3_tru = self.landmark3-np.array([[x],[y]])
-
         dif1x = self.landmark1[0]-x
         dif1y = self.landmark1[1]-y
         dif2x = self.landmark2[0]-x
@@ -157,7 +156,7 @@ class rob_2wh:
             [0, self.sig_phi**2]]
 
         m = np.array([self.landmark1, self.landmark2, self.landmark3])
-        
+
         z_hathist = np.array([])
         Hhist = np.array([])
         Shist = np.array([])
@@ -165,13 +164,16 @@ class rob_2wh:
         c = [0, 1, 2]
         for  i in range(3):
             j = c[i]
-            
+
             q = (m[j][0]-mu_bar[0])**2+(m[j][1]-mu_bar[1])**2
 
             zhat1 = math.sqrt(q)
             zhat2 = self.wrap(np.arctan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0])))
             zhat3 = mu_bar[2]
-            z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
+            # z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
+            z_hat = np.array([[float(zhat1)],[float(zhat2)]])
+
+            print('zhat = ', z_hat)
             # z_hat = np.array([math.sqrt(q)],\
             #             [math.atan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0]))-mu_bar[2]])
             H = np.array([[float(-(m[j][0]-mu_bar[0])/(math.sqrt(q))),float(-(m[j][1]-mu_bar[1])/(math.sqrt(q))),0],\
@@ -189,7 +191,7 @@ class rob_2wh:
         mu = mu_bar
         Sig = Sig_bar
 
-        # pz = 
+        # pz =
 
         # mu_bar = g(u,mu_prev)
         # Sig_bar = G*Sig_prev*G.T+R
