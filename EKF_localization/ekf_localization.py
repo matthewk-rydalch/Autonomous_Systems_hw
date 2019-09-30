@@ -6,14 +6,18 @@ import scipy.signal
 import random
 import math
 import matplotlib.pyplot as plt
+import scipy.io as sio
 from IPython.core.debugger import set_trace
 from rob_2wh import rob_2wh
 from animator2 import animator
+
 
 def main():
 
     rob = rob_2wh()
     animate = animator()
+    # given = sio.loadmat('hw2_soln_data.mat')
+    # set_trace()
 
     t = []
     vc = []
@@ -33,23 +37,36 @@ def main():
     ve = []
     we = []
     mu_prev = np.array([[rob.x0], [rob.y0], [rob.th0]])
-    Sig_prev = np.array([[1.0, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
+    Sig_prev = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0,0.0,0.1]])
     elements = int(rob.tf/rob.dt)
+
+    #if given data is use these
+    # t = rob.ttr[0]
+    # w = rob.wtr[0]
+    # th =rob.thtr[0]
+    # v = rob.vtr[0]
+    # x = rob.xtr[0]
+    # y = rob.ytr[0]
+    # set_trace()
 
     for i in range(0,elements+1):
 
-        t.append(i*rob.dt)
+        t.append(i*rob.dt) #coment out if t is given
         vc_new = 1+0.5*math.cos(2*math.pi*0.2*t[i])
+        # vc_new = 2+.8*math.cos(2*math.pi*0.2*t[i])
         vc.append(vc_new)
         wc_new = -0.2+2*math.cos(2*math.pi*0.6*t[i])
+        # wc_new = 1+2*math.cos(2*math.pi*0.6*t[i])
         wc.append(wc_new)
 
+        # # if data needs to be generated
         if i == 0:
+            (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc[i], wc[i], rob.x0, rob.y0, rob.th0)
             x.append(rob.x0)
             y.append(rob.y0)
             th.append(rob.th0)
-            v.append(0)
-            w.append(0)
+            v.append(v_new)
+            w.append(w_new)
         else:
             (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc[i], wc[i], x[i-1], y[i-1], th[i-1])
             x.append(x_new)

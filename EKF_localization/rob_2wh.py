@@ -5,6 +5,7 @@ import random
 import math
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import scipy.io as sio
 from IPython.core.debugger import set_trace
 from numpy.linalg import inv
 
@@ -35,6 +36,14 @@ class rob_2wh:
         self.x0 = -5
         self.y0 = -3
         self.th0 = math.pi/2 #rad
+
+        given = sio.loadmat('hw2_soln_data.mat')
+        self.wtr = given['om']
+        self.ttr = given['t']
+        self.thtr = given['th']
+        self.vtr = given['v']
+        self.xtr = given['x']
+        self.ytr = given['y']
 
     def vel_motion_model(self, vc, wc, x, y, th):
 
@@ -93,9 +102,9 @@ class rob_2wh:
         z_r1 = z_r1_tru + np.random.normal(0, self.sig_r)
         z_r2 = z_r2_tru + np.random.normal(0, self.sig_r)
         z_r3 = z_r3_tru + np.random.normal(0, self.sig_r)
-        z_b1 = z_b1_tru + np.random.normal(0, self.sig_phi)
-        z_b2 = z_b2_tru + np.random.normal(0, self.sig_phi)
-        z_b3 = z_b3_tru + np.random.normal(0, self.sig_phi)
+        z_b1 = z_b1_tru -th + np.random.normal(0, self.sig_phi)
+        z_b2 = z_b2_tru -th + np.random.normal(0, self.sig_phi)
+        z_b3 = z_b3_tru -th + np.random.normal(0, self.sig_phi)
 
         z = [[z_r1],[z_r2],[z_r3],[z_b1],[z_b2],[z_b3]]
 
@@ -116,6 +125,8 @@ class rob_2wh:
         Shist = np.array([])
         Khist = []
         c = [0, 1, 2]
+        # c = [0, 1]
+        # c = [0]
         for  i in range(3):
             j = c[i]
 
@@ -124,8 +135,8 @@ class rob_2wh:
             zhat1 = math.sqrt(q)
             zhat2 = self.wrap(np.arctan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0])))
             zhat3 = mu_bar[2]
-            # z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
-            z_hat = np.array([[float(zhat1)],[float(zhat2)]])
+            z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
+            # z_hat = np.array([[float(zhat1)],[float(zhat2)]])
 
             # print('zhat = ', z_hat)
             # z_hat = np.array([math.sqrt(q)],\
