@@ -8,6 +8,7 @@ from matplotlib import animation
 from IPython.core.debugger import set_trace
 from numpy.linalg import inv
 
+
 class rob_2wh:
     def __init__(self):
         self.a1 = 0.1
@@ -64,6 +65,7 @@ class rob_2wh:
 
         plt.show()
 
+
     # initialization function: plot the background of each frame
     def animation_init(self, line):
         line.set_data([], [])
@@ -76,6 +78,12 @@ class rob_2wh:
         return line,
 
     def simulate_sensor(self, x, y, th):
+        # if no sensory data is given you have to simulate it below.
+        # process_variance = np.random.multivariate_normal([0,0], self.R).T
+        # truth = model + [[process_variance[0]], [process_variance[1]]]
+        # z_r1_tru = self.landmark1-np.array([[x],[y]])
+        # z_r2_tru = self.landmark2-np.array([[x],[y]])
+        # z_r3_tru = self.landmark3-np.array([[x],[y]])
         dif1x = self.landmark1[0]-x
         dif1y = self.landmark1[1]-y
         dif2x = self.landmark2[0]-x
@@ -101,80 +109,66 @@ class rob_2wh:
 
         return(z)
 
-    def EKF(self,mu_prev, Sig_prev, u, z):
-
-
-        [mu_bar, Sig_bar, G, V, M] = self.propagate(mu_prev, Sig_prev, u)
-
-        Q = [[self.sig_r**2, 0],\
-            [0, self.sig_phi**2]]
-
-        m = np.array([self.landmark1, self.landmark2, self.landmark3])
-
-        z_hathist = np.array([])
-        Hhist = np.array([])
-        Shist = np.array([])
-        Khist = []
-        c = [0, 1, 2]
-        for  i in range(3):
-            j = c[i]
-
-            q = (m[j][0]-mu_bar[0])**2+(m[j][1]-mu_bar[1])**2
-
-            zhat1 = math.sqrt(q)
-            zhat2 = self.wrap(np.arctan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0])))
-            zhat3 = mu_bar[2]
-            # z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
-            z_hat = np.array([[float(zhat1)],[float(zhat2)]])
-
-            # print('zhat = ', z_hat)
-            # z_hat = np.array([math.sqrt(q)],\
-            #             [math.atan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0]))-mu_bar[2]])
-            H = np.array([[float(-(m[j][0]-mu_bar[0])/(math.sqrt(q))),float(-(m[j][1]-mu_bar[1])/(math.sqrt(q))),0],\
-                          [float((m[j][1]-mu_bar[1])/q),float(-(m[j][0]-mu_bar[0])/q),-1]])
-
-            z_now = np.array([[float(z[j])], [float(z[j+3])]])
-
-            S = np.array(H@Sig_bar@H.T+Q)
-            K = np.array(Sig_bar@H.T@inv(S))
-            mu_bar = np.array(mu_bar+K@(self.wrap(z_now-z_hat)))
-            Sig_bar = np.array((np.eye(3)-K@H)@Sig_bar)
-
-            Khist.append(K)
-
-        mu = mu_bar
-        Sig = Sig_bar
-
-        return(mu, Sig, Khist)
-    #
-
-    def propagate(self, mu_prev, Sig_prev, u):
-
-        xp = mu_prev[0]
-        yp = mu_prev[1]
-        thp = mu_prev[2]
+    def UKF(self,mu_prev, Sig_prev, u, z):
 
         v = u[0]
         w = u[1]
-        dt = self.dt
-
-        G = np.array([[1, 0, -v/w*math.cos(thp)+v/w*math.cos(self.wrap(thp+w*dt))],\
-            [0, 1, -v/w*math.sin(thp)+v/w*math.sin(self.wrap(thp+w*dt))],\
-            [0, 0, 1]])
-
-        V = np.array([[1/w*(-math.sin(thp)+math.sin(self.wrap(thp+w*dt))), v/(w**2)*(math.sin(thp)-math.sin(self.wrap(thp+w*dt)))+v/w*(math.cos(self.wrap(thp+w*dt))*dt)],\
-            [1/w*(math.cos(thp)-math.cos(self.wrap(thp+w*dt))), -v/(w**2)*(math.cos(thp)-math.cos(self.wrap(thp+w*dt)))+v/w*(math.sin(self.wrap(thp+w*dt))*dt)],\
-            [0, dt]])
 
         M = np.array([[self.a1*v**2+self.a2*w**2, 0],\
             [0, self.a3*v**2+self.a4*w**2]])
 
-        mu_bar = mu_prev + [[-v/w*math.sin(thp)+v/w*math.sin(self.wrap(thp+w*dt))],\
-                            [v/w*math.cos(thp)-v/w*math.cos(self.wrap(thp+w*dt))],\
-                            [w*dt]]
+        Q = np.array([[self.sig_r**2, 0],\
+            [0, self.sig_phi**2]])
 
-        # set_trace()
-        Sig_bar = G@Sig_prev*G.T+V@M@V.T
+        z1x2 = np.zeros((1,2))
+        mu_a_prev = np.concatenate((mu_prev, z1x2.T, z1x2.T), axis=0)
+        z3x2 = np.zeros((3,2))
+        z2x3 = np.zeros((2,3))
+        z2x2 = np.zeros((2,2))
+        sap1 = np.concatenate((Sig_prev, z3x2, z3x2), axis=1)
+        sap2 = np.concatenate((z2x3, M, z2x2), axis=1)
+        sap3 = np.concatenate((z2x3,z2x2,Q), axis=1)
+        Sig_a_prev = np.concatenate((sap1, sap2, sap3), axis=0)
+
+        #generate sigma points
+        n = 3 #?
+        k = 1 #?
+        alpha = 1 #?
+        lam = alpha**2*(n+k)-n
+        gm = np.sqrt(n+lam)
+        set_trace()
+        Xs_a_prev = (mu_a_prev, mu_a_prev+gm*np.sqrt(Sig_a_prev),\
+                     mu_a_prev-gm*np.sqrt(Sig_a_prev))
+
+        set_trace()
+        #pass sigma points through motion model and compute Guassian
+        Xs_x_bar = propogate(u+Xs_u,Xs_x_prev)
+        mu_bar = np.zeros(3,1)
+        for i in range(2*L):
+            mu_bar = mu_bar + wm[i]*Xs_x_bar[i]
+        for i in range(2*L):
+            Sig_bar = Sig_bar+wc[i]*(Xs_x_bar[i]-mu_bar)@(Xs_x_bar[i]-mu_bar).T
+
+        #predict observations at sigma points and compute gaussian statistics
+        Z_bar = h(Xs_x_bar)+Xs_z
+        z_hat = np.zeros(2,1)
+        for i in range(2*L):
+            z_hat = z_hat+wm[i]*Z_bar[i]
+        for i in range(2*L):
+            wc[i]*(Z_bar[i]-z_hat)@(Z_bar[i]-z_hat).T
+        for i in range(2*L):
+            Sig_xz = Sig_xz + wc[i]*(Xs_bar[i]-mu_bar)@(Z_bar[i]-z_hat).T
+
+        #update mean and Covariance
+        K = Sig_xz@inv(S)
+        mu = mu_bar+K*(z-z_hat)
+        Sig = Sig_bar-K@S@K.T
+
+        return(mu, Sig, K)
+    #
+
+    def propagate(self, mu_prev, Sig_prev, u):
+
 
         return(mu_bar, Sig_bar, G, V, M)
     #
