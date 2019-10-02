@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.core.debugger import set_trace
 from numpy.linalg import inv
+from numpy.linalg import cholesky
 
 
 class rob_2wh:
@@ -109,15 +110,15 @@ class rob_2wh:
 
         return(z)
 
-    def UKF(self,mu_prev, Sig_prev, u, z):
+    def UKF(self,mu_prev, Sig_prev, ut, z):
 
         #general idea Propogate forward a time step, then look at each landmark.
         #if you want to do it just like the books algorithm, propogate forward a time step
         #and look at one landmark.  Switch the landmark each time.
         #To fix this be sure to recalculate sigma points for each look at a landmark.
 
-        v = u[0]
-        w = u[1]
+        v = ut[0]
+        w = ut[1]
 
         M = np.array([[self.a1*v**2+self.a2*w**2, 0],\
             [0, self.a3*v**2+self.a4*w**2]])
@@ -139,21 +140,30 @@ class rob_2wh:
 
         #generate sigma points
         #check slides for this part.  Mean weights sum to one
-        n = 3 #?
-        k = 1 #?
-        alpha = 1 #?
+        n = 3 # this is the amount of states
+        k = 1 # no specific values for k and alpha.  I will use the recommended values on the slides
+        alpha = .5 #?
         lam = alpha**2*(n+k)-n
         gm = np.sqrt(n+lam)
-        set_trace()
         #generating sigma point.  we use the cholesky factor here.  It is on the sqrt(Sig_a)
-        Xs_a_prev = (mu_a_prev, mu_a_prev+gm*np.sqrt(Sig_a_prev),\
-                     mu_a_prev-gm*np.sqrt(Sig_a_prev))
+        L = np.linalg.cholesky(Sig_a_prev)
+        Xs_a_prev = np.concatenate((mu_a_prev, mu_a_prev+gm*L,\
+                     mu_a_prev-gm*L), axis = 1)
+        set_trace()
+        # Xs_a_prev = (mu_a_prev, mu_a_prev+gm*np.sqrt(Sig_a_prev),\
+        #              mu_a_prev-gm*np.sqrt(Sig_a_prev))
                      #1 column, 7 columns, 7 columns
 
-        set_trace()
         #pass sigma points through motion model and compute Guassian
         #adding u to each column of Xs_u.  Each column gets passed in individually
         #there should be a for loop here
+        Xs_x_prev = [[Xs_a_prev[0]],\
+                     [Xs_a_prev[1]],\
+                     [Xs_a_prev[2]]]
+        Xs_u = [Xs_a_prev[3], Xs_a_prev[4]]
+        Xs_z = [[Xs_a_prev[5]],\
+                [Xs_a_prev[6]]]
+
         Xs_x_bar = propogate(u+Xs_u,Xs_x_prev)
         mu_bar = np.zeros(3,1)
         for i in range(2*L):
