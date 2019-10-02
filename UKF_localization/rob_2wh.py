@@ -101,15 +101,20 @@ class rob_2wh:
         z_r1 = z_r1_tru + np.random.normal(0, self.sig_r)
         z_r2 = z_r2_tru + np.random.normal(0, self.sig_r)
         z_r3 = z_r3_tru + np.random.normal(0, self.sig_r)
-        z_b1 = z_b1_tru + np.random.normal(0, self.sig_phi)
-        z_b2 = z_b2_tru + np.random.normal(0, self.sig_phi)
-        z_b3 = z_b3_tru + np.random.normal(0, self.sig_phi)
+        z_b1 = z_b1_tru - th + np.random.normal(0, self.sig_phi)
+        z_b2 = z_b2_tru - th + np.random.normal(0, self.sig_phi)
+        z_b3 = z_b3_tru - th + np.random.normal(0, self.sig_phi)
 
         z = [[z_r1],[z_r2],[z_r3],[z_b1],[z_b2],[z_b3]]
 
         return(z)
 
     def UKF(self,mu_prev, Sig_prev, u, z):
+
+        #general idea Propogate forward a time step, then look at each landmark.
+        #if you want to do it just like the books algorithm, propogate forward a time step
+        #and look at one landmark.  Switch the landmark each time.
+        #To fix this be sure to recalculate sigma points for each look at a landmark.
 
         v = u[0]
         w = u[1]
@@ -121,7 +126,7 @@ class rob_2wh:
             [0, self.sig_phi**2]])
 
         z1x2 = np.zeros((1,2))
-        mu_a_prev = np.concatenate((mu_prev, z1x2.T, z1x2.T), axis=0)
+        mu_a_prev = np.concatenate((mu_prev, z1x2.T, z1x2.T), axis=0) #make sure this works
         z3x2 = np.zeros((3,2))
         z2x3 = np.zeros((2,3))
         z2x2 = np.zeros((2,2))
@@ -130,18 +135,25 @@ class rob_2wh:
         sap3 = np.concatenate((z2x3,z2x2,Q), axis=1)
         Sig_a_prev = np.concatenate((sap1, sap2, sap3), axis=0)
 
+        ###Be sure that you use the lower triangle for cholesky
+
         #generate sigma points
+        #check slides for this part.  Mean weights sum to one
         n = 3 #?
         k = 1 #?
         alpha = 1 #?
         lam = alpha**2*(n+k)-n
         gm = np.sqrt(n+lam)
         set_trace()
+        #generating sigma point.  we use the cholesky factor here.  It is on the sqrt(Sig_a)
         Xs_a_prev = (mu_a_prev, mu_a_prev+gm*np.sqrt(Sig_a_prev),\
                      mu_a_prev-gm*np.sqrt(Sig_a_prev))
+                     #1 column, 7 columns, 7 columns
 
         set_trace()
         #pass sigma points through motion model and compute Guassian
+        #adding u to each column of Xs_u.  Each column gets passed in individually
+        #there should be a for loop here
         Xs_x_bar = propogate(u+Xs_u,Xs_x_prev)
         mu_bar = np.zeros(3,1)
         for i in range(2*L):
@@ -150,6 +162,8 @@ class rob_2wh:
             Sig_bar = Sig_bar+wc[i]*(Xs_x_bar[i]-mu_bar)@(Xs_x_bar[i]-mu_bar).T
 
         #predict observations at sigma points and compute gaussian statistics
+        #h nonlinear measurment model
+        #Xs_x_bar by algorithm is only wrtten for 1 marker.  For more this needs to be changed.  Redraw sample points for each landmark
         Z_bar = h(Xs_x_bar)+Xs_z
         z_hat = np.zeros(2,1)
         for i in range(2*L):
@@ -158,6 +172,9 @@ class rob_2wh:
             wc[i]*(Z_bar[i]-z_hat)@(Z_bar[i]-z_hat).T
         for i in range(2*L):
             Sig_xz = Sig_xz + wc[i]*(Xs_bar[i]-mu_bar)@(Z_bar[i]-z_hat).T
+
+        #measurement update for each landmark is done individually
+        #there is a for loop  Be sure to recalculate your sigma points
 
         #update mean and Covariance
         K = Sig_xz@inv(S)
@@ -168,7 +185,12 @@ class rob_2wh:
     #
 
     def propagate(self, mu_prev, Sig_prev, u):
+        #pass in cholesky requirements and return cholesky_x
+        # of the 15 vc and wc, 13 will be the same value
 
+        #extract the states from sigma point model of states
+
+        #propogate state through time as before
 
         return(mu_bar, Sig_bar, G, V, M)
     #

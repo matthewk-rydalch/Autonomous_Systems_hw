@@ -45,11 +45,12 @@ def main():
         wc.append(wc_new)
 
         if i == 0:
+            (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc[i], wc[i], rob.x0, rob.y0, rob.th0)
             x.append(rob.x0)
             y.append(rob.y0)
             th.append(rob.th0)
-            v.append(0)
-            w.append(0)
+            v.append(v_new)
+            w.append(w_new)
         else:
             (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc[i], wc[i], x[i-1], y[i-1], th[i-1])
             x.append(x_new)
