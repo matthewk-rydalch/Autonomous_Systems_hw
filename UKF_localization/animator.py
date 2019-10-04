@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
 
-from rob_2wh import rob_2wh
+import rob_2wh
 reload(rob_2wh)
 from rob_2wh import Rob2Wh
 
@@ -18,7 +18,7 @@ class Animator:
         self.yhat = yhat
         self.thhat = thhat
 
-        rob = rob_2wh()
+        rob = Rob2Wh()
         mx1, my1, mx2, my2, mx3, my3 = rob.landmark1[0], rob.landmark1[1],\
          rob.landmark2[0], rob.landmark2[1], rob.landmark3[0], rob.landmark3[1]
         # check = plt.plot(x,y,'g')

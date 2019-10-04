@@ -174,11 +174,12 @@ class Rob2Wh:
 
         wm = np.array([wm])
         wc = np.array([[wc]]).T
-        mu_bar = (wm@Xs_x_bar).T
+        mu_bar = (wm@Xs_x_bar.T).T
 
         Sig_bar = np.zeros((3,3))
         for i in range(2*n+1):
-            Sig_bar = Sig_bar+wc[i]*(np.array([Xs_x_bar[i]]).T-mu_bar)@(np.array([Xs_x_bar[i]]).T-mu_bar).T
+            Sig_bar = Sig_bar+wc[i]*(np.array([Xs_x_bar[:,i]]).T-mu_bar)@(np.array([Xs_x_bar[:,i]]).T-mu_bar).T
+
         #predict observations at sigma points and compute gaussian statistics
         #h nonlinear measurment model
         #Xs_x_bar by algorithm is only wrtten for 1 marker.  For more this needs to be changed.  Redraw sample points for each landmark
@@ -189,7 +190,7 @@ class Rob2Wh:
         for i in range(2*n+1):
             St = St+wc[i]*(np.array([Zbar[i]]).T-zhat).T@(np.array([Zbar[i]]).T-zhat)
         for i in range(2*n+1):
-            Sig_xz = Sig_xz + wc[i]*np.array([np.array([Xs_x_bar[i]]).T-mu_bar])@(np.array([Zbar[i]]).T-zhat).T
+            Sig_xz = Sig_xz + wc[i]*np.array([np.array([Xs_x_bar[:,i]]).T-mu_bar])@(np.array([Zbar[i]]).T-zhat).T
 
         Sig_xz = np.squeeze(Sig_xz)
 
@@ -234,7 +235,6 @@ class Rob2Wh:
             vt.append(vhat)
             wt.append(what)
             Xbar_x.append([[x_new, y_new, th_new]])
-        set_trace()
 
         Xbar_x = np.array(Xbar_x).T
         Xbar_x = np.squeeze(Xbar_x)
@@ -245,22 +245,13 @@ class Rob2Wh:
     def sigma_measurements(self, Xbar_x, xs_z):
 
         xs_z = np.squeeze(xs_z)
-        Zbar = np.zeros((15,2))
-        #!!!!!!!!!start here and also add noise back into sigma_measurement
-    def simulate_sensor(self, x, y, th):
-        dif1x = self.landmark1[0]-x
-        dif1y = self.landmark1[1]-y
-        z_r1_tru = math.sqrt(dif1x**2+dif1y**2)
-        z_b1_tru = self.wrap(np.arctan2(dif1y,dif1x))
-        z = np.array([[z_r1_tru],[float(z_b1_tru)]])
-        Zbar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[0][1],Xbar_x[0][2])
-        Zbar[0,:] = np.array(Zbar1+np.array([xs_z[:,0]]).T).T
-
+        Z_bar = np.zeros((15,2))
+        Z_bar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[1][0],Xbar_x[2][0])
+        Z_bar[0,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
         for i in range(1,15):
-
-            Zbar1 = self.simulate_sensor(Xbar_x[i][0],Xbar_x[i][1],Xbar_x[i][2])
-            Zbar[i,:] = np.array(Zbar1+np.array([xs_z[:,0]]).T).T
-        return Zbar
+            Z_bar1 = self.simulate_sensor(Xbar_x[0][i],Xbar_x[1][i],Xbar_x[2][i])
+            Z_bar[i,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
+        return Z_bar
 
     def wrap(self, phi):
         phi_new = (phi+np.pi)%(2*np.pi)-np.pi
