@@ -78,7 +78,7 @@ class Rob2Wh:
         line.set_data(x, y)
         return line,
 
-    def simulate_sensor(self, x, y, th):
+    def simulate_sensor(self, x, y, th, noise = 1):
         # if no sensory data is given you have to simulate it below.
         # process_variance = np.random.multivariate_normal([0,0], self.R).T
         # truth = model + [[process_variance[0]], [process_variance[1]]]
@@ -99,16 +99,17 @@ class Rob2Wh:
         # z_b2_tru = np.array([self.wrap(np.arctan2(dif2y,dif2x))])
         # z_b3_tru = np.array([self.wrap(np.arctan2(dif3y,dif3x))])
 
-        # z_r1 = z_r1_tru + np.random.normal(0, self.sig_r)
+        z_r1 = z_r1_tru + noise*np.random.normal(0, self.sig_r)
         # z_r2 = z_r2_tru + np.random.normal(0, self.sig_r)
         # z_r3 = z_r3_tru + np.random.normal(0, self.sig_r)
-        # z_b1 = z_b1_tru - th + np.random.normal(0, self.sig_phi)
+        z_b1 = z_b1_tru - th + noise*np.random.normal(0, self.sig_phi)
         # z_b2 = z_b2_tru - th + np.random.normal(0, self.sig_phi)
         # z_b3 = z_b3_tru - th + np.random.normal(0, self.sig_phi)
 
         # z = [[z_r1],[z_r2],[z_r3],[z_b1],[z_b2],[z_b3]]
+        z = np.array([[z_r1],[float(z_b1)]])
 
-        z = np.array([[z_r1_tru],[float(z_b1_tru)]])
+        # z = np.array([[z_r1_tru],[float(z_b1_tru)]])
 
         return(z)
 
@@ -246,10 +247,11 @@ class Rob2Wh:
 
         xs_z = np.squeeze(xs_z)
         Z_bar = np.zeros((15,2))
-        Z_bar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[1][0],Xbar_x[2][0])
+        noise = 0
+        Z_bar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[1][0],Xbar_x[2][0], noise)
         Z_bar[0,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
         for i in range(1,15):
-            Z_bar1 = self.simulate_sensor(Xbar_x[0][i],Xbar_x[1][i],Xbar_x[2][i])
+            Z_bar1 = self.simulate_sensor(Xbar_x[0][i],Xbar_x[1][i],Xbar_x[2][i], noise)
             Z_bar[i,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
         return Z_bar
 
