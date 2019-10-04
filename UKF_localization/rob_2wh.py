@@ -10,7 +10,7 @@ from numpy.linalg import inv
 from numpy.linalg import cholesky
 
 
-class rob_2wh:
+class Rob2Wh:
     def __init__(self):
         self.a1 = 0.1
         self.a2 = 0.01

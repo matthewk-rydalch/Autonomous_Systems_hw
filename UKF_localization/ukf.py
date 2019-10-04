@@ -1,3 +1,7 @@
+# everything important
+from IPython.core.debugger import set_trace
+from importlib import reload
+
 #kf_localization
 import numpy as np
 import scipy
@@ -6,14 +10,19 @@ import scipy.signal
 import random
 import math
 import matplotlib.pyplot as plt
-from IPython.core.debugger import set_trace
-from rob_2wh import rob_2wh
-from animator import animator
+
+import rob_2wh
+import animator
+reload(rob_2wh)
+reload(animator)
+from rob_2wh import Rob2Wh
+from animator import Animator
+
 
 def main():
 
-    rob = rob_2wh()
-    animate = animator()
+    rob = Rob2Wh()
+    animate = Animator()
 
     t = []
     vc = []

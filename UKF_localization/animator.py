@@ -1,10 +1,15 @@
+from IPython.core.debugger import set_trace
+from importlib import reload
+
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
-from IPython.core.debugger import set_trace
-from rob_2wh import rob_2wh
 
-class animator:
+from rob_2wh import rob_2wh
+reload(rob_2wh)
+from rob_2wh import Rob2Wh
+
+class Animator:
     def animator(self, x, y, th, xhat, yhat, thhat, elements):
         self.xtru = x
         self.ytru = y
