@@ -38,10 +38,10 @@ class rob_2wh:
         self.y0 = -3
         self.th0 = math.pi/2 #rad
 
-    def vel_motion_model(self, v_hat, w_hat, x, y, th):
+    def vel_motion_model(self, vc, wc, x, y, th):
 
-        # v_hat = vc + np.random.normal(0, (self.a1*vc**2+self.a2*wc**2))
-        # w_hat = wc + np.random.normal(0, (self.a3*vc**2+self.a4*wc**2))
+        v_hat = vc + np.random.normal(0, (self.a1*vc**2+self.a2*wc**2))
+        w_hat = wc + np.random.normal(0, (self.a3*vc**2+self.a4*wc**2))
 
         x1 = x - v_hat/w_hat*math.sin(th)+v_hat/w_hat*math.sin(self.wrap(th+w_hat*self.dt))
         y1 = y + v_hat/w_hat*math.cos(th)-v_hat/w_hat*math.cos(self.wrap(th+w_hat*self.dt))
@@ -149,26 +149,22 @@ class rob_2wh:
         Beta = 2
         #generating sigma point.  we use the cholesky factor here.  It is on the sqrt(Sig_a)
         L = np.linalg.cholesky(Sig_a_prev)
-        Xs_a_prev = np.concatenate((mu_a_prev, mu_a_prev+gm*L,\
+        Xa_prev = np.concatenate((mu_a_prev, mu_a_prev+gm*L,\
                      mu_a_prev-gm*L), axis = 1)
-        # Xs_a_prev = (mu_a_prev, mu_a_prev+gm*np.sqrt(Sig_a_prev),\
-        #              mu_a_prev-gm*np.sqrt(Sig_a_prev))
                      #1 column, 7 columns, 7 columns
 
         #pass sigma points through motion model and compute Guassian
         #adding u to each column of Xs_u.  Each column gets passed in individually
         #there should be a for loop here
-        Xs_x_prev = Xs_a_prev[0:3]
-        Xs_u = Xs_a_prev[3:5]
-        Xs_z = Xs_a_prev[5:7]
-        # set_trace()
+        Xs_x_prev = Xa_prev[0:3]
+        Xs_u = Xa_prev[3:5]
+        Xs_z = Xa_prev[5:7]
         Xs_x_bar = self.propagate(ut,Xs_u,Xs_x_prev)
         mu_bar = np.zeros((3,1))
 
         #calculate weights
         wm = []
         wc = []
-        # set_trace()
         wm.append(lam/(n+lam))
         wc.append(wm[0]+1-alpha**2+Beta)
 
@@ -176,8 +172,6 @@ class rob_2wh:
             wm.append(1/(2*(n+lam)))
             wc.append(wm[i])
 
-        # for i in range(2*n):
-        #     mu_bar = mu_bar + wm[i]*Xs_x_bar[3*i:3*i+2]
         wm = np.array([wm])
         wc = np.array([[wc]]).T
         mu_bar = (wm@Xs_x_bar).T
@@ -188,28 +182,25 @@ class rob_2wh:
         #predict observations at sigma points and compute gaussian statistics
         #h nonlinear measurment model
         #Xs_x_bar by algorithm is only wrtten for 1 marker.  For more this needs to be changed.  Redraw sample points for each landmark
-        Z_bar = self.sigma_measurements(Xs_x_bar,Xs_z)
-        # z_hat = np.zeros(2,1)
-        # for i in range(2*L):
-        #     z_hat = z_hat+wm[i]*Z_bar[i]
-        z_hat = (wm@Z_bar).T
+        Zbar = self.sigma_measurements(Xs_x_bar,Xs_z)
+        zhat = (wm@Zbar).T
         St = 0
         Sig_xz = np.zeros((3,2))
         for i in range(2*n+1):
-            St = St+wc[i]*(np.array([Z_bar[i]]).T-z_hat).T@(np.array([Z_bar[i]]).T-z_hat)
+            St = St+wc[i]*(np.array([Zbar[i]]).T-zhat).T@(np.array([Zbar[i]]).T-zhat)
         for i in range(2*n+1):
-            Sig_xz = Sig_xz + wc[i]*np.array([np.array([Xs_x_bar[i]]).T-mu_bar])@(np.array([Z_bar[i]]).T-z_hat).T
+            Sig_xz = Sig_xz + wc[i]*np.array([np.array([Xs_x_bar[i]]).T-mu_bar])@(np.array([Zbar[i]]).T-zhat).T
 
         Sig_xz = np.squeeze(Sig_xz)
 
         #measurement update for each landmark is done individually
         #there is a for loop  Be sure to recalculate your sigma points
         #update mean and Covariance
-        K = Sig_xz/St
-        mu = mu_bar+K@(zt-z_hat)
-        Sig = Sig_bar-K*St@K.T
+        Kt = Sig_xz/St
+        mu_t= mu_bar+Kt@(zt-zhat)
+        Sig_t = Sig_bar-Kt*St@Kt.T
 
-        return(mu, Sig, K)
+        return(mu_t, Sig_t, Kt)
     #
 
     def propagate(self, ut, Xs_u, state_prev):
@@ -228,37 +219,48 @@ class rob_2wh:
         tht = []
         vt = []
         wt = []
-        Xs_bar = []
+        Xbar_x = []
 
         for i in range(length):
             vhat = ut[0]+Xs_u[0][i]
             what = ut[1]+Xs_u[1][i]
-            [x_new, y_new, th_new, v_new, w_new] = self.vel_motion_model(vhat, what, x_prev[i], y_prev[i], th_prev[i])
-
+            x_new = x_prev[i] - vhat/what*math.sin(th_prev[i])+vhat/what*math.sin(self.wrap(th_prev[i]+what*self.dt))
+            y_new = y_prev[i] + vhat/what*math.cos(th_prev[i])-vhat/what*math.cos(self.wrap(th_prev[i]+what*self.dt))
+            th_new = self.wrap(th_prev[i] + what*self.dt)
+            # [x_new, y_new, th_new, v_new, w_new] = self.vel_motion_model(vhat, what, x_prev[i], y_prev[i], th_prev[i])
             xt.append(x_new)
             yt.append(y_new)
             tht.append(th_new)
-            vt.append(v_new)
-            wt.append(w_new)
-            xs_bar = np.array([[x_new, y_new, th_new]]).T
-            Xs_bar.append([xs_bar])
+            vt.append(vhat)
+            wt.append(what)
+            Xbar_x.append([[x_new, y_new, th_new]])
+        set_trace()
 
-        Xs_bar = np.squeeze(Xs_bar)
+        Xbar_x = np.array(Xbar_x).T
+        Xbar_x = np.squeeze(Xbar_x)
 
-        return(Xs_bar)
+        return(Xbar_x)
     #
 
-    def sigma_measurements(self, xs_bar, xs_z):
+    def sigma_measurements(self, Xbar_x, xs_z):
 
         xs_z = np.squeeze(xs_z)
-        Z_bar = np.zeros((15,2))
-        Z_bar1 = self.simulate_sensor(xs_bar[0][0],xs_bar[0][1],xs_bar[0][2])
-        Z_bar[0,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
-        
+        Zbar = np.zeros((15,2))
+        #!!!!!!!!!start here and also add noise back into sigma_measurement
+    def simulate_sensor(self, x, y, th):
+        dif1x = self.landmark1[0]-x
+        dif1y = self.landmark1[1]-y
+        z_r1_tru = math.sqrt(dif1x**2+dif1y**2)
+        z_b1_tru = self.wrap(np.arctan2(dif1y,dif1x))
+        z = np.array([[z_r1_tru],[float(z_b1_tru)]])
+        Zbar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[0][1],Xbar_x[0][2])
+        Zbar[0,:] = np.array(Zbar1+np.array([xs_z[:,0]]).T).T
+
         for i in range(1,15):
-            Z_bar1 = self.simulate_sensor(xs_bar[i][0],xs_bar[i][1],xs_bar[i][2])
-            Z_bar[i,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
-        return Z_bar
+
+            Zbar1 = self.simulate_sensor(Xbar_x[i][0],Xbar_x[i][1],Xbar_x[i][2])
+            Zbar[i,:] = np.array(Zbar1+np.array([xs_z[:,0]]).T).T
+        return Zbar
 
     def wrap(self, phi):
         phi_new = (phi+np.pi)%(2*np.pi)-np.pi
