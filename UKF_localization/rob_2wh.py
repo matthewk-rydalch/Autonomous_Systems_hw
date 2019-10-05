@@ -17,6 +17,11 @@ class Rob2Wh:
         self.a3 = 0.01
         self.a4 = 0.1
 
+        # self.a1 = 0.5
+        # self.a2 = 0.02
+        # self.a3 = 0.005
+        # self.a4 = 0.15
+
         self.landmark1 = np.array([[6], [4]])
         self.landmark2 = np.array([[-7], [8]])
         self.landmark3 = np.array([[6], [-4]])
@@ -28,8 +33,8 @@ class Rob2Wh:
         #sensor noise
         self.sig_r = 0.1
         self.sig_phi = 0.05 #rad
-        # self.sig_r = 0.000000001
-        # self.sig_phi = 50
+        # self.sig_r = 0.08
+        # self.sig_phi = .12
 
         self.dt = 0.1
         self.tf = 20
@@ -87,39 +92,31 @@ class Rob2Wh:
         # z_r3_tru = self.landmark3-np.array([[x],[y]])
         dif1x = self.landmark1[0]-x
         dif1y = self.landmark1[1]-y
-        # dif2x = self.landmark2[0]-x
-        # dif2y = self.landmark2[1]-y
-        # dif3x = self.landmark3[0]-x
-        # dif3y = self.landmark3[1]-y
+        dif2x = self.landmark2[0]-x
+        dif2y = self.landmark2[1]-y
+        dif3x = self.landmark3[0]-x
+        dif3y = self.landmark3[1]-y
 
         z_r1_tru = math.sqrt(dif1x**2+dif1y**2)
-        # z_r2_tru = math.sqrt(dif2x**2+dif2y**2)
-        # z_r3_tru = math.sqrt(dif3x**2+dif3y**2)
+        z_r2_tru = math.sqrt(dif2x**2+dif2y**2)
+        z_r3_tru = math.sqrt(dif3x**2+dif3y**2)
         z_b1_tru = self.wrap(np.arctan2(dif1y,dif1x))
-        # z_b2_tru = np.array([self.wrap(np.arctan2(dif2y,dif2x))])
-        # z_b3_tru = np.array([self.wrap(np.arctan2(dif3y,dif3x))])
+        z_b2_tru = self.wrap(np.arctan2(dif2y,dif2x))
+        z_b3_tru = self.wrap(np.arctan2(dif3y,dif3x))
 
         z_r1 = z_r1_tru + noise*np.random.normal(0, self.sig_r)
-        # z_r2 = z_r2_tru + np.random.normal(0, self.sig_r)
-        # z_r3 = z_r3_tru + np.random.normal(0, self.sig_r)
+        z_r2 = z_r2_tru + noise*np.random.normal(0, self.sig_r)
+        z_r3 = z_r3_tru + noise*np.random.normal(0, self.sig_r)
         z_b1 = z_b1_tru - th + noise*np.random.normal(0, self.sig_phi)
-        # z_b2 = z_b2_tru - th + np.random.normal(0, self.sig_phi)
-        # z_b3 = z_b3_tru - th + np.random.normal(0, self.sig_phi)
+        z_b2 = z_b2_tru - th + noise*np.random.normal(0, self.sig_phi)
+        z_b3 = z_b3_tru - th + noise*np.random.normal(0, self.sig_phi)
 
-        # z = [[z_r1],[z_r2],[z_r3],[z_b1],[z_b2],[z_b3]]
-        z = np.array([[z_r1],[float(z_b1)]])
-
-        # z = np.array([[z_r1_tru],[float(z_b1_tru)]])
+        z = np.array([[z_r1],[z_r2],[z_r3],[float(z_b1)],[float(z_b2)],[float(z_b3)]])
 
         return(z)
 
-    def UKF(self,mu_prev, Sig_prev, ut, zt):
-
-        #general idea Propogate forward a time step, then look at each landmark.
-        #if you want to do it just like the books algorithm, propogate forward a time step
-        #and look at one landmark.  Switch the landmark each time.
-        #To fix this be sure to recalculate sigma points for each look at a landmark.
-
+    def UKF(self,mu_prev, Sig_prev, ut, zt, marker):
+        set_trace()
         v = ut[0]
         w = ut[1]
         M = np.array([[self.a1*v**2+self.a2*w**2, 0],\
@@ -129,7 +126,7 @@ class Rob2Wh:
             [0, self.sig_phi**2]])
 
         z1x2 = np.zeros((1,2))
-        mu_a_prev = np.concatenate((mu_prev, z1x2.T, z1x2.T), axis=0) #make sure this works
+        mu_a_prev = np.concatenate((mu_prev, z1x2.T, z1x2.T), axis=0)
         z3x2 = np.zeros((3,2))
         z2x3 = np.zeros((2,3))
         z2x2 = np.zeros((2,2))
@@ -138,21 +135,23 @@ class Rob2Wh:
         sap3 = np.concatenate((z2x3,z2x2,Q), axis=1)
         Sig_a_prev = np.concatenate((sap1, sap2, sap3), axis=0)
 
-        ###Be sure that you use the lower triangle for cholesky
-
         #generate sigma points
-        #check slides for this part.  Mean weights sum to one
         n = 7 # #u+#x+#z
+
         k = 1 # no specific values for k and alpha.  I will use the recommended values on the slides
         alpha = .5 #?
+        Beta = 2
+        # k = 1 # no specific values for k and alpha.  I will use the recommended values on the slides
+        # alpha = .1 #?
+        # Beta = 1.5
+
         lam = alpha**2*(n+k)-n
         gm = np.sqrt(n+lam)
-        Beta = 2
-        #generating sigma point.  we use the cholesky factor here.  It is on the sqrt(Sig_a)
+        
+        #generating sigma point.  we use the cholesky factor here.
         L = np.linalg.cholesky(Sig_a_prev)
         Xa_prev = np.concatenate((mu_a_prev, mu_a_prev+gm*L,\
                      mu_a_prev-gm*L), axis = 1)
-                     #1 column, 7 columns, 7 columns
 
         #pass sigma points through motion model and compute Guassian
         #adding u to each column of Xs_u.  Each column gets passed in individually
@@ -160,8 +159,6 @@ class Rob2Wh:
         Xs_x_prev = Xa_prev[0:3]
         Xs_u = Xa_prev[3:5]
         Xs_z = Xa_prev[5:7]
-        Xs_x_bar = self.propagate(ut,Xs_u,Xs_x_prev)
-        mu_bar = np.zeros((3,1))
 
         #calculate weights
         wm = []
@@ -175,15 +172,26 @@ class Rob2Wh:
 
         wm = np.array([wm])
         wc = np.array([[wc]]).T
-        mu_bar = (wm@Xs_x_bar.T).T
+        if marker == 0:
+            Xs_x_bar = self.propagate(ut,Xs_u,Xs_x_prev)
 
-        Sig_bar = np.zeros((3,3))
-        for i in range(2*n+1):
-            Sig_bar = Sig_bar+wc[i]*(np.array([Xs_x_bar[:,i]]).T-mu_bar)@(np.array([Xs_x_bar[:,i]]).T-mu_bar).T
+            mu_bar = np.zeros((3,1))
+            mu_bar = (wm@Xs_x_bar.T).T
 
-        #predict observations at sigma points and compute gaussian statistics
-        #h nonlinear measurment model
-        #Xs_x_bar by algorithm is only wrtten for 1 marker.  For more this needs to be changed.  Redraw sample points for each landmark
+            Sig_bar = np.zeros((3,3))
+            for i in range(2*n+1):
+                Sig_bar = Sig_bar+wc[i]*(np.array([Xs_x_bar[:,i]]).T-mu_bar)@(np.array([Xs_x_bar[:,i]]).T-mu_bar).T
+        else:
+            Xs_x_bar = Xs_x_prev
+            mu_bar = mu_prev
+            Sig_bar = Sig_prev
+            # mu2 = np.zeros((3,1))
+            # mu2 = (wm@Xs_x_bar.T).T
+            # Sig2 = np.zeros((3,3))   
+            # for i in range(2*n+1):
+            #     Sig2 = Sig2 +wc[i]*(np.array([Xs_x_bar[:,i]]).T-mu2)@(np.array([Xs_x_bar[:,i]]).T-mu2).T
+
+        #set_trace()
         Zbar = self.sigma_measurements(Xs_x_bar,Xs_z)
         zhat = (wm@Zbar).T
         St = 0
@@ -199,7 +207,8 @@ class Rob2Wh:
         #there is a for loop  Be sure to recalculate your sigma points
         #update mean and Covariance
         Kt = Sig_xz/St
-        mu_t= mu_bar+Kt@(zt-zhat)
+        z_marker = np.array([zt[marker],zt[marker+3]])
+        mu_t= mu_bar+Kt@(z_marker-zhat)
         Sig_t = Sig_bar-Kt*St@Kt.T
 
         return(mu_t, Sig_t, Kt)
@@ -248,10 +257,12 @@ class Rob2Wh:
         xs_z = np.squeeze(xs_z)
         Z_bar = np.zeros((15,2))
         noise = 0
-        Z_bar1 = self.simulate_sensor(Xbar_x[0][0],Xbar_x[1][0],Xbar_x[2][0], noise)
+        z_meas = self.simulate_sensor(Xbar_x[0][0],Xbar_x[1][0],Xbar_x[2][0], noise)
+        Z_bar1 = np.array([z_meas[0],z_meas[3]])
         Z_bar[0,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
         for i in range(1,15):
-            Z_bar1 = self.simulate_sensor(Xbar_x[0][i],Xbar_x[1][i],Xbar_x[2][i], noise)
+            z_meas = self.simulate_sensor(Xbar_x[0][i],Xbar_x[1][i],Xbar_x[2][i], noise)
+            Z_bar1 = np.array([z_meas[0],z_meas[3]])
             Z_bar[i,:] = np.array(Z_bar1+np.array([xs_z[:,0]]).T).T
         return Z_bar
 

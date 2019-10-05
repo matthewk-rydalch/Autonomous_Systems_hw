@@ -53,6 +53,13 @@ def main():
         wc_new = -0.2+2*math.cos(2*math.pi*0.6*t[i])
         wc.append(wc_new)
 
+        # t.append(i*rob.dt)
+        # vc_new = 2+0.9*math.cos(math.pi*0.2*t[i])
+        # vc.append(vc_new)
+        # wc_new = -0.8+2*math.cos(2*math.pi*t[i])
+        # wc.append(wc_new)
+
+
         if i == 0:
             (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc[i], wc[i], rob.x0, rob.y0, rob.th0)
             x.append(rob.x0)
@@ -72,11 +79,15 @@ def main():
         z_now = np.array(z[i])
         u_now = np.array([vc[i],wc[i]])
 
-        mu_new, Sig_new, K_new = rob.UKF(mu_prev,Sig_prev,u_now,z_now)
+        for j in range(3):
+            marker = j
+            mu_new, Sig_new, K_new = rob.UKF(mu_prev,Sig_prev,u_now,z_now, marker)
+            mu_prev = mu_new
+            Sig_prev = Sig_new
+
         mu.append(mu_new)
         Sig.append(Sig_new)
         K.append(K_new)
-
         xe.append(mu_new[0]-x[i])
         ye.append(mu_new[1]-y[i])
         the.append(mu_new[2]-th[i])
