@@ -42,7 +42,7 @@ def main():
     ve = []
     we = []
     mu_prev = np.array([[rob.x0], [rob.y0], [rob.th0]])
-    Sig_prev = np.array([[1.0, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
+    Sig_prev = np.array([[0.1, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
     elements = int(rob.tf/rob.dt)
 
     for i in range(0,elements+1):
