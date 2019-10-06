@@ -8,6 +8,7 @@ from matplotlib import animation
 from IPython.core.debugger import set_trace
 from numpy.linalg import inv
 from numpy.linalg import cholesky
+import scipy.io as sio
 # import lmd
 # import lmd.rad_wrap_pi
 # import lmd.rad_wrap_pi as wrap
@@ -51,6 +52,17 @@ class Rob2Wh:
         self.x0 = -5
         self.y0 = -3
         self.th0 = math.pi/2 #rad
+
+        given = sio.loadmat('hw3_1_soln_data.mat') #1 marker
+        # given = sio.loadmat('hw3_4_soln_data.mat') #3 markers
+        self.z_btr = given['bearing'] #only for 1 marker
+        self.z_rtr = given['range'] #only for 1 marker
+        self.wtr = given['om']
+        self.ttr = given['t']
+        self.thtr = given['th']
+        self.vtr = given['v']
+        self.xtr = given['x']
+        self.ytr = given['y']
 
     def vel_motion_model(self, vc, wc, x, y, th):
 
@@ -322,18 +334,8 @@ class Rob2Wh:
         axs[2].set_xlabel('time [s]')
         fig1.show()
 
-        fig2, axs = plt.subplots(2)
-        fig2.suptitle("velocity and angular vs. Time")
-        axs[0].plot(t, vc, label = "v [m/s]")
-        axs[0].plot(t, v, label = "true v [m/s]")
-        axs[0].legend(loc = "upper right")
-        axs[1].plot(t, wc, label="w [m/s]")
-        axs[1].plot(t, w, label="true w [m/s]")
-        axs[1].set_xlabel('time [s]')
-        fig2.show()
-
-        fig3, axs = plt.subplots(3)
-        fig3.suptitle("Covariance & Error vs. Time")
+        fig2, axs = plt.subplots(3)
+        fig2.suptitle("Covariance & Error vs. Time")
         axs[0].plot(t,xe, label="x error [m]")
         axs[0].plot(t,sigx_hi, label="upper covariance")
         axs[0].plot(t,sigx_lo, label="lower covariance")
@@ -347,10 +349,10 @@ class Rob2Wh:
         axs[2].plot(t,sigth_lo, label="lower covariance")
         axs[2].legend(loc = "upper right")
         axs[2].set_xlabel('time [s]')
-        fig3.show()
+        fig2.show()
 
-        fig5 = plt.figure(5)
-        fig5.suptitle("Kalman Gains vs. Time")
+        fig3 = plt.figure(5)
+        fig3.suptitle("Kalman Gains vs. Time")
         plt.plot(t, k1r, label="Marker 1 range Kalman gain")
         plt.plot(t, k1b, label="Marker 1 bearing Kalman gain")
         plt.plot(t, k2r, label="Marker 2 range Kalman gain")
@@ -359,7 +361,7 @@ class Rob2Wh:
         plt.plot(t, k3b, label="Marker 3 bearing Kalman gain")
         plt.legend(loc = "upper right")
 
-        fig5.show()
+        fig3.show()
     #
 r2d = 180.0 / np.pi
 d2r = np.pi / 180.0
