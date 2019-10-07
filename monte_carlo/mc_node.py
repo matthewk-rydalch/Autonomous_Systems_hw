@@ -51,6 +51,7 @@ def main():
     mu_prev = np.array([[x_new], [y_new], [th_new]])
     Sig_prev = np.array([[0.1, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
     elements = int(rob.tf/rob.dt)
+    M = rob.particles
 
     t_given = rob.ttr
     x_given = rob.xtr
@@ -65,9 +66,11 @@ def main():
         if given == 0:
             t.append(i*rob.dt)
             vc_new, wc_new = rob.generate_command(t[i])
-            (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc_new, wc_new, x_new, y_new, th_new)
+            ut = np.array([[vc_new],[wc_new]])
+            states_new = np.array([[x_new],[y_new],[th_new]])
+            (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(ut, states_new)
             u_new = np.array([v_new,w_new])
-            z_new = rob.simulate_sensor(x_new, y_new, th_new)
+            z_new = rob.simulate_sensor(states_new)
         else:
             t.append(t_given[0][i])
             vc_new, wc_new = rob.generate_command(t[i])
@@ -78,11 +81,12 @@ def main():
             if markers == 1:
                 z_new = np.array([[z_given[0,i], 0, 0, z_given[1,i], 0, 0]]).T
             else:
-                z_new = rob.simulate_sensor(x_new, y_new, th_new)
+                states = np.array([[x_new],[y_new],[z_new]])
+                z_new = rob.simulate_sensor(states_new)
 
         for j in range(markers):
             marker = j
-            mu_new, Sig_new, K_new = mc.UKF(mu_prev,Sig_prev,u_new,z_new, marker)
+            mu_new, Sig_new, K_new = mc.monte_carlo(mu_prev,Sig_prev,u_new,z_new, M)
             mu_prev = mu_new
             Sig_prev = Sig_new
 
