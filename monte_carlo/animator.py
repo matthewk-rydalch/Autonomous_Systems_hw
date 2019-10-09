@@ -10,7 +10,7 @@ reload(rob_2wh)
 from rob_2wh import Rob2Wh
 
 class Animator:
-    def animator(self, x, y, th, xhat, yhat, thhat, elements):
+    def animator(self, x, y, th, xhat, yhat, thhat, elements, xgrid, ygrid):
         self.xtru = x
         self.ytru = y
         self.thtru = th
@@ -25,7 +25,7 @@ class Animator:
 
         fig, ax = plt.subplots()
         xtru, ytru, xdata, ydata, thdata, xhist, yhist, xpoint, ypoint = [], [], [], [], [], [], [], [], []
-        plt.axes(xlim=(-10, 10), ylim=(-10, 10))
+        plt.axes(xlim=(xgrid), ylim=(ygrid))
         plt.plot(mx1,my1,'g^')
         plt.plot(mx2,my2,'g^')
         plt.plot(mx3,my3,'g^')

@@ -18,11 +18,14 @@ reload(monte_carlo)
 from rob_2wh import Rob2Wh
 from animator import Animator
 from monte_carlo import Monte_Carlo
+import wrap
+reload(wrap)
+from wrap import wrap
 
 
 def main():
 
-    markers = 3
+    markers = 1
     given = 0
     rob = Rob2Wh()
     animate = Animator()
@@ -45,21 +48,22 @@ def main():
     the = []
     ve = []
     we = []
-    x_new = rob.x0
-    y_new = rob.y0
-    th_new = rob.th0
-    mu_prev = np.array([[x_new], [y_new], [th_new]])
+    xgrid = [-10, 10]
+    ygrid = [-10, 10]
+    states_new = np.array([[rob.x0], [rob.y0], [rob.th0]])
+    mu_prev = states_new
     Sig_prev = np.array([[0.1, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
     elements = int(rob.tf/rob.dt)
     M = rob.particles
 
-    t_given = rob.ttr
-    x_given = rob.xtr
-    y_given = rob.ytr
-    th_given = rob.thtr
-    v_given = rob.vtr
-    w_given = rob.wtr
-    z_given = np.squeeze(np.array([[rob.z_rtr],[rob.z_btr]]))
+    if given != 0:
+        t_given = rob.ttr
+        x_given = rob.xtr
+        y_given = rob.ytr
+        th_given = rob.thtr
+        v_given = rob.vtr
+        w_given = rob.wtr
+        z_given = np.squeeze(np.array([[rob.z_rtr],[rob.z_btr]]))
 
 
     for i in range(0,elements+1):
@@ -67,9 +71,7 @@ def main():
             t.append(i*rob.dt)
             vc_new, wc_new = rob.generate_command(t[i])
             ut = np.array([[vc_new],[wc_new]])
-            states_new = np.array([[x_new],[y_new],[th_new]])
-            (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(ut, states_new)
-            u_new = np.array([v_new,w_new])
+            (states_new, v_new, w_new) = rob.vel_motion_model(ut, states_new)
             z_new = rob.simulate_sensor(states_new)
         else:
             t.append(t_given[0][i])
@@ -84,11 +86,13 @@ def main():
                 states = np.array([[x_new],[y_new],[z_new]])
                 z_new = rob.simulate_sensor(states_new)
 
+        Xk_prev = mc.uniform_point_cloud(xgrid, ygrid, M)
         for j in range(markers):
             marker = j
-            mu_new, Sig_new, K_new = mc.monte_carlo(mu_prev,Sig_prev,u_new,z_new, M)
-            mu_prev = mu_new
-            Sig_prev = Sig_new
+            Xkt = mc.monte_carlo(Xk_prev, ut, z_new, M)
+            Xk_prev = Xkt
+            # mu_prev = mu_new
+            # Sig_prev = Sig_new
 
         mu.append(mu_new)
         Sig.append(Sig_new)
@@ -123,7 +127,7 @@ def main():
         sig_x.append(Sig[i][0][0])
         sig_y.append(Sig[i][1][1])
         sig_th.append(Sig[i][2][2])
-    animate.animator(x, y, th, x_hat,y_hat,th_hat, elements)
+    animate.animator(x, y, th, x_hat,y_hat,th_hat, elements, xgrid, ygrid)
 
     plotting(x_hat, x, y_hat, y, th_hat, th, vc, v, wc, w,\
         t, xe, ye, the, ve, we, K, sig_x, sig_y, sig_th)

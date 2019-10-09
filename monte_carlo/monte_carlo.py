@@ -16,15 +16,18 @@ from rob_2wh import Rob2Wh
 
 
 class Monte_Carlo:
-    def monte_carlo(self,Xk_prev, ut, zt, m, M):
-
+    def monte_carlo(self,Xk_prev, ut, zt, M): #do I need a little m?
+        set_trace()
         rob = Rob2Wh()
 
         #Xkt are particles
-        Xk_bar = Xkt = phi #phi is an empty vector
+        phi = np.zeros((M,3)) #phi is an empty vector
+        Xk_bar = Xkt = phi
+        x_prev = Xk_prev
         for m in range(M):
-            xm = rob.vel_motion_model(ut,xm_prev) #be sure noise is included
-            wm = self.measurement_model(zt,xm,m) #weight, this actually is a probability calculation using meas model
+            #xm is state hypothesis
+            x[m], vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
+            w[m] = self.measurement_model(zt,xm,m) #weight, this actually is a probability calculation using meas model
             Xk_bar = Xk_bar+inner_product(xm,wm) #adds particles to their weights
 
         #prediction: draw from the proposal
@@ -52,6 +55,16 @@ class Monte_Carlo:
     def low_var_sampler(self, Xkt, Wt):
 
         return(Xk_bar)
+
+    def uniform_point_cloud(self, xgrid, ygrid, M):
+        # set_trace()
+        Xk_prev = np.zeros((M,3))
+        for m in range(M):
+            Xk_prev[m][0] = np.random.uniform(low=xgrid[0], high=xgrid[1], size=None)
+            Xk_prev[m][1] = np.random.uniform(low=ygrid[0], high=ygrid[1], size=None)
+            Xk_prev[m][2] = np.random.uniform(low= -math.pi, high = math.pi, size = None)
+
+        return(Xk_prev)
 
         # def wrap(self, phi):
         #     phi_new = (phi+np.pi)%(2*np.pi)-np.pi
