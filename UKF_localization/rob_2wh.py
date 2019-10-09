@@ -177,7 +177,7 @@ class Rob2Wh:
                 term2 = np.array([Xk_x_bar[:,i]]).T-mu_bar
                 term2[2] = wrap(term2[2])
                 Sig_bar = Sig_bar+wc[i]*term2@term2.T
-            # set_trace()
+
         else:
             Xk_x_bar = Xk_x_prev
             mu_bar = mu_prev
@@ -188,6 +188,7 @@ class Rob2Wh:
             # for i in range(2*n+1):
             #     Sig2 = Sig2 +wc[i]*(np.array([Xk_x_bar[:,i]]).T-mu2)@(np.array([Xk_x_bar[:,i]]).T-mu2).T
 
+        set_trace()
         Zbar = self.sigma_measurements(Xk_x_bar,Xk_z, marker)
         zhat = (wm@Zbar).T
         zhat[1] = wrap(zhat[1])

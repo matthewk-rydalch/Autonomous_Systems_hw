@@ -21,8 +21,8 @@ from animator import Animator
 
 def main():
 
-    markers = 3
-    given = 1
+    markers = 1
+    given = 0
     rob = Rob2Wh()
     animate = Animator()
 
@@ -63,7 +63,7 @@ def main():
             t.append(i*rob.dt)
             vc_new, wc_new = generate_command(t[i])
             (x_new, y_new, th_new, v_new, w_new) = rob.vel_motion_model(vc_new, wc_new, x_new, y_new, th_new)
-            u_new = np.array([v_new,w_new])
+            u_new = np.array([vc_new,wc_new])
             z_new = rob.simulate_sensor(x_new, y_new, th_new)
         else:
             t.append(t_given[0][i])
