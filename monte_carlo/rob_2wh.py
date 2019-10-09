@@ -77,10 +77,13 @@ class Rob2Wh:
 
         v_hat = vc + np.random.normal(0, np.sqrt(self.a1*vc**2+self.a2*wc**2))
         w_hat = wc + np.random.normal(0, np.sqrt(self.a3*vc**2+self.a4*wc**2))
+        #include a gamma that accounts for imperfect heading
+        #gama = np.random.normal(0, np.sqrt(self.a5*vc**2+self.a6*wc**2))
+        #we may not have a5 and a6.  His are a5 = .01 a6 = .01
 
         x1 = xt - v_hat/w_hat*math.sin(tht)+v_hat/w_hat*math.sin(wrap(tht+w_hat*self.dt))
         y1 = yt + v_hat/w_hat*math.cos(tht)-v_hat/w_hat*math.cos(wrap(tht+w_hat*self.dt))
-        th1 = wrap(tht + w_hat*self.dt)
+        th1 = wrap(tht + w_hat*self.dt) #add in gamma*self.dt
 
         states_new = np.array([[x1],[y1],[th1]])
 

@@ -21,8 +21,8 @@ from animator import Animator
 
 def main():
 
-    markers = 1
-    given = 0
+    markers = 3
+    given = 1
     rob = Rob2Wh()
     animate = Animator()
 
@@ -56,7 +56,7 @@ def main():
     th_given = rob.thtr
     v_given = rob.vtr
     w_given = rob.wtr
-    z_given = np.squeeze(np.array([[rob.z_rtr],[rob.z_btr]]))
+    # z_given = np.squeeze(np.array([[rob.z_rtr],[rob.z_btr]]))
 
     for i in range(0,elements+1):
         if given == 0:
@@ -72,10 +72,11 @@ def main():
             y_new = y_given[0][i]
             th_new = th_given[0][i]
             u_new = np.array([v_given[0][i],w_given[0][i]])
-            if markers == 1:
-                z_new = np.array([[z_given[0,i], 0, 0, z_given[1,i], 0, 0]]).T
-            else:
-                z_new = rob.simulate_sensor(x_new, y_new, th_new)
+            z_new = rob.simulate_sensor(x_new, y_new, th_new)
+            # if markers == 1:
+            #     z_new = np.array([[z_given[0,i], 0, 0, z_given[1,i], 0, 0]]).T
+            # else:
+            #     z_new = rob.simulate_sensor(x_new, y_new, th_new)
 
         for j in range(markers):
             marker = j

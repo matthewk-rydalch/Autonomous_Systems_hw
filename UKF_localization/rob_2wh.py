@@ -67,10 +67,10 @@ class Rob2Wh:
         self.lam = self.alpha**2*(self.n+self.k)-self.n
         self.gm = np.sqrt(self.n+self.lam)
 
-        given = sio.loadmat('hw3_1_soln_data.mat') #1 marker
-        # given = sio.loadmat('hw3_4_soln_data.mat') #3 markers
-        self.z_btr = given['bearing'] #only for 1 marker
-        self.z_rtr = given['range'] #only for 1 marker
+        # given = sio.loadmat('hw3_1_soln_data.mat') #1 marker
+        given = sio.loadmat('hw3_5_soln_data.mat') #3 markers
+        # self.z_btr = given['bearing'] #only for 1 marker
+        # self.z_rtr = given['range'] #only for 1 marker
         self.wtr = given['om']
         self.ttr = given['t']
         self.thtr = given['th']
@@ -188,7 +188,6 @@ class Rob2Wh:
             # for i in range(2*n+1):
             #     Sig2 = Sig2 +wc[i]*(np.array([Xk_x_bar[:,i]]).T-mu2)@(np.array([Xk_x_bar[:,i]]).T-mu2).T
 
-        set_trace()
         Zbar = self.sigma_measurements(Xk_x_bar,Xk_z, marker)
         zhat = (wm@Zbar).T
         zhat[1] = wrap(zhat[1])
