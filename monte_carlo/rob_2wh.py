@@ -6,9 +6,15 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from IPython.core.debugger import set_trace
+from importlib import reload
 from numpy.linalg import inv
 from numpy.linalg import cholesky
 import scipy.io as sio
+import wrap
+reload(wrap)
+from wrap import wrap
+
+
 # import lmd
 # import lmd.rad_wrap_pi
 # import lmd.rad_wrap_pi as wrap
@@ -76,7 +82,9 @@ class Rob2Wh:
         y1 = yt + v_hat/w_hat*math.cos(tht)-v_hat/w_hat*math.cos(wrap(tht+w_hat*self.dt))
         th1 = wrap(tht + w_hat*self.dt)
 
-        return x1, y1, th1, v_hat, w_hat
+        states_new = np.array([[x1],[y1],[th1]])
+
+        return states_new, v_hat, w_hat
 
     def simulate_sensor(self, state, noise = 1):
 
@@ -101,9 +109,9 @@ class Rob2Wh:
         z_r1 = z_r1_tru + noise*np.random.normal(0, self.sig_r)
         z_r2 = z_r2_tru + noise*np.random.normal(0, self.sig_r)
         z_r3 = z_r3_tru + noise*np.random.normal(0, self.sig_r)
-        z_b1 = wrap(z_b1_tru - th + noise*np.random.normal(0, self.sig_phi))
-        z_b2 = wrap(z_b2_tru - th + noise*np.random.normal(0, self.sig_phi))
-        z_b3 = wrap(z_b3_tru - th + noise*np.random.normal(0, self.sig_phi))
+        z_b1 = wrap(z_b1_tru - tht + noise*np.random.normal(0, self.sig_phi))
+        z_b2 = wrap(z_b2_tru - tht + noise*np.random.normal(0, self.sig_phi))
+        z_b3 = wrap(z_b3_tru - tht + noise*np.random.normal(0, self.sig_phi))
 
         z = np.array([[z_r1],[z_r2],[z_r3],[float(z_b1)],[float(z_b2)],[float(z_b3)]])
 
