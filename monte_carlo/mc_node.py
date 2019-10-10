@@ -48,8 +48,6 @@ def main():
     the = []
     ve = []
     we = []
-    xgrid = [-10, 10]
-    ygrid = [-10, 10]
     states_new = np.array([[rob.x0], [rob.y0], [rob.th0]])
     mu_prev = states_new
     Sig_prev = np.array([[0.1, 0.0, 0.0],[0.0, 0.1, 0.0],[0.0,0.0,0.1]])
@@ -86,10 +84,10 @@ def main():
                 states = np.array([[x_new],[y_new],[z_new]])
                 z_new = rob.simulate_sensor(states_new)
 
-        Xk_prev = mc.uniform_point_cloud(xgrid, ygrid, M)
+        Xk_prev = mc.uniform_point_cloud(rob.xgrid, rob.ygrid, M)
         for j in range(markers):
             marker = j
-            Xkt = mc.monte_carlo(Xk_prev, ut, z_new, M)
+            Xkt = mc.monte_carlo(Xk_prev, ut, z_new, M, rob)
             Xk_prev = Xkt
             # mu_prev = mu_new
             # Sig_prev = Sig_new
@@ -127,7 +125,7 @@ def main():
         sig_x.append(Sig[i][0][0])
         sig_y.append(Sig[i][1][1])
         sig_th.append(Sig[i][2][2])
-    animate.animator(x, y, th, x_hat,y_hat,th_hat, elements, xgrid, ygrid)
+    animate.animator(x, y, th, x_hat,y_hat,th_hat, elements, rob.xgrid, rob.ygrid)
 
     plotting(x_hat, x, y_hat, y, th_hat, th, vc, v, wc, w,\
         t, xe, ye, the, ve, we, K, sig_x, sig_y, sig_th)

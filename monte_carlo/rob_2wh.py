@@ -54,6 +54,9 @@ class Rob2Wh:
         self.y0 = -3
         self.th0 = math.pi/2 #rad
 
+        self.xgrid = [-10, 10]
+        self.ygrid = [-10, 10]
+
         # given = sio.loadmat('hw3_1_soln_data.mat') #1 marker
         # # given = sio.loadmat('hw3_4_soln_data.mat') #3 markers
         # self.z_btr = given['bearing'] #only for 1 marker

@@ -10,28 +10,27 @@ from IPython.core.debugger import set_trace
 from numpy.linalg import inv
 from numpy.linalg import cholesky
 import scipy.io as sio
-import rob_2wh
-reload(rob_2wh)
-from rob_2wh import Rob2Wh
+import wrap
+reload(wrap)
+from wrap import wrap
 
 
 class Monte_Carlo:
-    def monte_carlo(self,Xk_prev, ut, zt, M): #do I need a little m?
-        rob = Rob2Wh()
+    def monte_carlo(self,Xk_prev, ut, zt, M, rob): #do I need a little m?
 
         #Xkt are particles
         phi = np.zeros((M,3)) #phi is an empty vector #include weights (M,4)?
         Xk_bar = Xkt = phi
         x_prev = Xk_prev
-        x = np.zeros((M,3))
-        w = np.zeros((M,1))
+        xp = np.zeros((M,3))
+        wp = np.zeros((M,1))
         for m in range(M):
             #xm is state
             state_new, vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
-            x[m] = state_new[0:3,0]
-            set_trace()
-            w[m] = self.measurement_model(zt,x[m],m) #weight, this actually is a probability calculation using meas model
-            Xk_bar = Xk_bar+inner_product(x[m],w[m]) #adds particles to their weights
+            xp[m] = state_new[0:3,0]
+            wp[m] = self.measurement_model(zt,xp[m], rob.simulate_sensor, rob.sig_phi) #weight, this actually is a probability calculation using meas model
+            set_trace()            
+            Xk_bar = Xk_bar+inner_product(xp[m],wp[m]) #adds particles to their weights
         #prediction: draw from the proposal
         #correction: weighting by the ratio of target and proposal
 
@@ -51,7 +50,11 @@ class Monte_Carlo:
         return(Xbar_x)
     #
 
-    def measurement_model(self, Xbar_x, Xk_z, marker):
+    def measurement_model(self, zt, xm, simulate_sensor, sig_phi):
+        noise = 0
+        zm = simulate_sensor(xm, noise)
+
+        wm = self.prob(zt[0]-zm[0], sig_phi)*self.prob(wrap(zt[1]-zm[1]), sig_phi)
         #call simulate_sensor?
         #states have no sensor noise here.  They are truth
         #calc range and bearing then add noise
@@ -67,14 +70,17 @@ class Monte_Carlo:
         #product of the three probabilties for each landmark is the final probability.  This may not be done in this function?
 
 
-        return Z_bar #not this?
+        return wm
+
+    def prob(self, delta, sig_2):
+        probabilty = 1/(math.sqrt(2*math.pi*sig_2))*math.exp(-delta**2/(2*sig_2))
+        return probabilty
 
     def low_var_sampler(self, Xkt, Wt):
 
         return(Xk_bar)
 
     def uniform_point_cloud(self, xgrid, ygrid, M):
-        # set_trace()
         Xk_prev = np.zeros((M,3))
         for m in range(M):
             Xk_prev[m][0] = np.random.uniform(low=xgrid[0], high=xgrid[1], size=None)
