@@ -85,7 +85,7 @@ class Rob2Wh:
         y1 = yt + v_hat/w_hat*math.cos(tht)-v_hat/w_hat*math.cos(wrap(tht+w_hat*self.dt))
         th1 = wrap(tht + w_hat*self.dt) #add in gamma*self.dt
 
-        states_new = np.array([[x1],[y1],[th1]])
+        states_new = np.array([x1,y1,th1])
 
         return states_new, v_hat, w_hat
 

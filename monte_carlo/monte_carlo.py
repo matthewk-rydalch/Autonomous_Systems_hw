@@ -17,19 +17,21 @@ from rob_2wh import Rob2Wh
 
 class Monte_Carlo:
     def monte_carlo(self,Xk_prev, ut, zt, M): #do I need a little m?
-        set_trace()
         rob = Rob2Wh()
 
         #Xkt are particles
         phi = np.zeros((M,3)) #phi is an empty vector #include weights (M,4)?
         Xk_bar = Xkt = phi
         x_prev = Xk_prev
+        x = np.zeros((M,3))
+        w = np.zeros((M,1))
         for m in range(M):
-            #xm is state hypothesis
-            x[m], vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
-            w[m] = self.measurement_model(zt,xm,m) #weight, this actually is a probability calculation using meas model
-            Xk_bar = Xk_bar+inner_product(xm,wm) #adds particles to their weights
-
+            #xm is state
+            state_new, vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
+            x[m] = state_new[0:3,0]
+            set_trace()
+            w[m] = self.measurement_model(zt,x[m],m) #weight, this actually is a probability calculation using meas model
+            Xk_bar = Xk_bar+inner_product(x[m],w[m]) #adds particles to their weights
         #prediction: draw from the proposal
         #correction: weighting by the ratio of target and proposal
 
@@ -63,7 +65,7 @@ class Monte_Carlo:
         #there is a probability calculation in the book  table 5.2
         #product of the two is the weight
         #product of the three probabilties for each landmark is the final probability.  This may not be done in this function?
-        
+
 
         return Z_bar #not this?
 
