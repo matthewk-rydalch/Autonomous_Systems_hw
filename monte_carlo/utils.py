@@ -1,4 +1,5 @@
 import numpy as np
+from IPython.core.debugger import set_trace
 
 
 r2d = 180.0 / np.pi
@@ -30,3 +31,19 @@ def rad_wrap_2pi( angle ):
     angle -= 2*np.pi * np.floor(angle * inv_2pi)
     return angle
 #
+
+def low_var_sampler(xt, wt):
+    M = xt.shape[1]
+    phi = np.zeros((M,3))
+    xbar = phi
+    r = np.random.uniform(0, 1.0/M, size=None)
+    c = wt[0]
+    i = 0
+    for m in range(M):
+        U = r+m/M
+        while U>c:
+            i = i+1
+            c = c+wt[i]
+        xbar[m] = xt[:,i]
+
+    return(xbar)

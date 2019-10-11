@@ -10,9 +10,9 @@ from importlib import reload
 from numpy.linalg import inv
 from numpy.linalg import cholesky
 import scipy.io as sio
-import wrap
-reload(wrap)
-from wrap import wrap
+import utils
+reload(utils)
+from utils import wrap
 
 
 # import lmd
@@ -74,9 +74,9 @@ class Rob2Wh:
 
         vc = ut[0]
         wc = ut[1]
-        xt = state[0]
-        yt = state[1]
-        tht = state[2]
+        xt = state[0,:]
+        yt = state[1,:]
+        tht = state[2,:]
 
         v_hat = vc + np.random.normal(0, np.sqrt(self.a1*vc**2+self.a2*wc**2))
         w_hat = wc + np.random.normal(0, np.sqrt(self.a3*vc**2+self.a4*wc**2))
@@ -84,19 +84,19 @@ class Rob2Wh:
         #gama = np.random.normal(0, np.sqrt(self.a5*vc**2+self.a6*wc**2))
         #we may not have a5 and a6.  His are a5 = .01 a6 = .01
 
-        x1 = xt - v_hat/w_hat*math.sin(tht)+v_hat/w_hat*math.sin(wrap(tht+w_hat*self.dt))
-        y1 = yt + v_hat/w_hat*math.cos(tht)-v_hat/w_hat*math.cos(wrap(tht+w_hat*self.dt))
+        x1 = xt - v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(wrap(tht+w_hat*self.dt))
+        y1 = yt + v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(wrap(tht+w_hat*self.dt))
         th1 = wrap(tht + w_hat*self.dt) #add in gamma*self.dt
 
         states_new = np.array([x1,y1,th1])
 
-        return states_new, v_hat, w_hat
+        return states_new
 
     def simulate_sensor(self, state, noise = 1):
 
-        xt = state[0]
-        yt = state[1]
-        tht = state[2]
+        xt = state[0,:]
+        yt = state[1,:]
+        tht = state[2,:]
 
         dif1x = self.landmark1[0]-xt
         dif1y = self.landmark1[1]-yt
@@ -105,9 +105,9 @@ class Rob2Wh:
         dif3x = self.landmark3[0]-xt
         dif3y = self.landmark3[1]-yt
 
-        z_r1_tru = math.sqrt(dif1x**2+dif1y**2)
-        z_r2_tru = math.sqrt(dif2x**2+dif2y**2)
-        z_r3_tru = math.sqrt(dif3x**2+dif3y**2)
+        z_r1_tru = np.sqrt(dif1x**2+dif1y**2)
+        z_r2_tru = np.sqrt(dif2x**2+dif2y**2)
+        z_r3_tru = np.sqrt(dif3x**2+dif3y**2)
         z_b1_tru = np.arctan2(dif1y,dif1x)
         z_b2_tru = np.arctan2(dif2y,dif2x)
         z_b3_tru = np.arctan2(dif3y,dif3x)
@@ -119,7 +119,7 @@ class Rob2Wh:
         z_b2 = wrap(z_b2_tru - tht + noise*np.random.normal(0, self.sig_phi))
         z_b3 = wrap(z_b3_tru - tht + noise*np.random.normal(0, self.sig_phi))
 
-        z = np.array([[z_r1],[z_r2],[z_r3],[float(z_b1)],[float(z_b2)],[float(z_b3)]])
+        z = np.array([[z_r1],[z_r2],[z_r3],[z_b1],[z_b2],[z_b3]])
 
         return(z)
 
