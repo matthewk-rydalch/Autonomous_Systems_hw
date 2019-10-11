@@ -29,7 +29,8 @@ class Monte_Carlo:
             state_new, vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
             xp[m] = state_new[0:3,0]
             wp[m] = self.measurement_model(zt,xp[m], rob.simulate_sensor, rob.sig_phi) #weight, this actually is a probability calculation using meas model
-            set_trace()            
+            set_trace()    
+            #this is actually just appending the x and weight to Xk_bar.          
             Xk_bar = Xk_bar+inner_product(xp[m],wp[m]) #adds particles to their weights
         #prediction: draw from the proposal
         #correction: weighting by the ratio of target and proposal
