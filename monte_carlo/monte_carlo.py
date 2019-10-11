@@ -19,19 +19,21 @@ class Monte_Carlo:
     def monte_carlo(self,Xk_prev, ut, zt, M, rob): #do I need a little m?
 
         #Xkt are particles
-        phi = np.zeros((M,3)) #phi is an empty vector #include weights (M,4)?
+        phi = np.zeros((M,4)) #phi is an empty vector #include weights (M,4)?
         Xk_bar = Xkt = phi
         x_prev = Xk_prev
         xp = np.zeros((M,3))
         wp = np.zeros((M,1))
+        weight_sum = 0
         for m in range(M):
             #xm is state
             state_new, vhat, what = rob.vel_motion_model(ut,x_prev[m]) #be sure noise is included
             xp[m] = state_new[0:3,0]
             wp[m] = self.measurement_model(zt,xp[m], rob.simulate_sensor, rob.sig_phi) #weight, this actually is a probability calculation using meas model
-            set_trace()    
-            #this is actually just appending the x and weight to Xk_bar.          
-            Xk_bar = Xk_bar+inner_product(xp[m],wp[m]) #adds particles to their weights
+            #this is actually just appending the x and weight to Xk_bar.
+            Xk_bar[m] = np.concatenate((xp[m],wp[m]), axis=0) #adds particles to their weights
+            weight_sum = weight_sum + wp[m]
+        Xk_bar[:,3] = Xk_bar[:,3]/weight_sum
         #prediction: draw from the proposal
         #correction: weighting by the ratio of target and proposal
 
@@ -77,9 +79,20 @@ class Monte_Carlo:
         probabilty = 1/(math.sqrt(2*math.pi*sig_2))*math.exp(-delta**2/(2*sig_2))
         return probabilty
 
-    def low_var_sampler(self, Xkt, Wt):
-
-        return(Xk_bar)
+    def low_var_sampler(self, xt, wt):
+        M = len(xt)
+        phi = np.zeros((M,3))
+        xbar = phi
+        r = np.random.uniform(0, 1.0/M, size=None)
+        c = wt[0]
+        i = 0
+        for m in range(M):
+            U = r+(m-1.0)/M
+            while U>c:
+                i = i+1
+                c = c+wt[i]
+            xbar[m] = xt[i]
+        return(xbar)
 
     def uniform_point_cloud(self, xgrid, ygrid, M):
         Xk_prev = np.zeros((M,3))
