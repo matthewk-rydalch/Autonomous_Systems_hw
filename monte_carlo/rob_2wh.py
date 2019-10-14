@@ -37,7 +37,7 @@ class Rob2Wh:
         # self.landmark2 = np.array([[-7], [8]])
         # self.landmark3 = np.array([[-5], [-4]])
 
-        #sensor noise
+        #sensor noise standard deviation
         self.sig_r = 0.1
         self.sig_phi = 0.05 #rad
         # self.sig_r = 0.08

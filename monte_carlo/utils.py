@@ -38,16 +38,14 @@ def rad_wrap_2pi( angle ):
 
 def low_var_sampler(xt, wt):
     M = xt.shape[1]
-    phi = np.zeros((M,3))
-    xbar = phi
-    r = np.random.uniform(0, 1.0/M, size=None)
+    xbar = np.zeros((M,3)) #phi in algorithm
+    r = np.random.uniform(0, 1.0/M, size=None) #starting point for comb
     c = wt[0]
     i = 0
     for m in range(M):
-        U = r+m/M
+        U = r+m/M #comb brush
         while U>c:
             i = i+1
-            c = c+wt[i]
+            c = c+wt[i] #go to next weight
         xbar[m] = xt[:,i]
-
     return(xbar)

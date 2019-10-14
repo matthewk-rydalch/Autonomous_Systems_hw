@@ -42,17 +42,17 @@ class Monte_Carlo:
         zm = simulate_sensor(xm, noise)
 
         #calculate weights based on probability of each particle's range and bearing given the actual measurement and sensor noise
-        set_trace()
-        wm = self.prob(zt[0]-zm[0], sig_phi)*self.prob(wrap(zt[3]-zm[3]), sig_phi) #there is something weird going on here.  
+        wm = self.prob(zt[0]-zm[0], sig_phi)*self.prob(wrap(zt[3]-zm[3]), sig_phi)  
 
         #product of the three probabilties for each landmark is the final probability.  This may not be done in this function?
 
         return wm
     #
 
-    def prob(self, delta, sig_2):
+    def prob(self, delta, sig):
 
-        #probabilty of a delta given the variance sig^2
+        #probabilty of a delta given the variance sig^2. Table 5.2
+        sig_2 = sig**2 #need variance not standard deviation
         probabilty = 1/(np.sqrt(2*math.pi*sig_2))*np.exp(-delta**2/(2*sig_2))
 
         return probabilty
