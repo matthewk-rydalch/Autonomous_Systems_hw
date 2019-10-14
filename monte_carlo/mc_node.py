@@ -20,7 +20,7 @@ from plotter import Plotter
 def main():
 
     #user inputs
-    markers = 1
+    markers = 3
     given = 0 #set to one if data is given
 
     #instatiate objects
@@ -59,6 +59,9 @@ def main():
         w_given = rob.wtr
         z_given = np.squeeze(np.array([[rob.z_rtr],[rob.z_btr]]))
 
+    #initialize particles
+    Xkt = mc.uniform_point_cloud(rob.xgrid, rob.ygrid, M)
+    # Xkt = np.array([[rob.x0]*M, [rob.y0]*M, [rob.th0]*M])
     ##loop through each time step
     for i in range(0,elements+1):
 
@@ -69,11 +72,12 @@ def main():
             ut = np.array([[vc_new],[wc_new]])
 
             #propogate truth
-            if i != 0:
-                states_new = rob.vel_motion_model(ut, states_new)
+            # if i != 0:
+            states_new = rob.vel_motion_model(ut, states_new)
             z_new = rob.simulate_sensor(states_new)
 
         else: #get truth from given data
+            print('truth given')
             t.append(t_given[0][i])
             vc_new, wc_new = rob.generate_command(t[i])
             ut = np.array([[vc_new],[wc_new]])
@@ -83,21 +87,12 @@ def main():
             else:
                 z_new = rob.simulate_sensor(states_new) #may need to change depending on the data given
 
-
-        ##filter implimentation
-        #initialize particles
-        Xk_prev = mc.uniform_point_cloud(rob.xgrid, rob.ygrid, M)
-
-        #run filter for each marker
-        for j in range(markers):
-            marker = j
-            Xkt = mc.monte_carlo(Xk_prev, ut, z_new, M, rob)
-            Xk_prev = Xkt
-            x_new = np.mean(Xkt[:,0])
-            y_new = np.mean(Xkt[:,1])
-            th_new = np.mean(Xkt[:,2])
-            mu_new = np.array([x_new, y_new, th_new])
-            Sig_new = np.cov(Xkt)
+        Xkt = mc.monte_carlo(Xkt, ut, z_new, M, rob)
+        x_new = np.mean(Xkt[0,:])
+        y_new = np.mean(Xkt[1,:])
+        th_new = np.mean(Xkt[2,:])
+        mu_new = np.array([x_new, y_new, th_new])
+        Sig_new = np.cov(Xkt)
 
         #append values to lists
         mu.append(mu_new)
@@ -108,7 +103,7 @@ def main():
         xe.append(mu_new[0]-xt[i])
         ye.append(mu_new[1]-yt[i])
         the.append(mu_new[2]-tht[i])
-        Xk.append(Xk_prev)
+        Xk.append(Xkt)
 
     #prep varialbes for plotting and animation
     size = len(mu)

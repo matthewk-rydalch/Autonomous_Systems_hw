@@ -48,4 +48,4 @@ def low_var_sampler(xt, wt):
             i = i+1
             c = c+wt[i] #go to next weight
         xbar[m] = xt[:,i]
-    return(xbar)
+    return(xbar.T)

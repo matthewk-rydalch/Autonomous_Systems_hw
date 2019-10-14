@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from IPython.core.debugger import set_trace
 
 class Plotter:
     def plotting(self, x_hat, xt, y_hat, yt, th_hat, tht, t, xe, ye, the, sig_x, sig_y, sig_th):
@@ -48,3 +49,8 @@ class Plotter:
         aXk[2].set_xlabel('time [s]')
         fig2.show()
     #
+
+    def test(self, Xk):
+        fig1 = plt.figure()
+        plt.scatter(Xk[0,:],Xk[1,:])
+        fig1.show

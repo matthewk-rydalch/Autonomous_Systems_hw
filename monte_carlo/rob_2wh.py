@@ -69,7 +69,7 @@ class Rob2Wh:
         self.ygrid = [-10, 10]
     #
 
-    def vel_motion_model(self, ut, state):
+    def vel_motion_model(self, ut, state, noise = 1):
 
         #commands and states
         vc = ut[0]
@@ -78,11 +78,13 @@ class Rob2Wh:
         yt = state[1,:]
         tht = state[2,:]
 
+        size = len(xt)
+
         #Add noise to commands
-        v_hat = vc + np.random.normal(0, np.sqrt(self.a1*vc**2+self.a2*wc**2))
-        w_hat = wc + np.random.normal(0, np.sqrt(self.a3*vc**2+self.a4*wc**2))
+        v_hat = vc + noise*np.random.normal(0, np.sqrt(self.a1*vc**2+self.a2*wc**2),size)
+        w_hat = wc + noise*np.random.normal(0, np.sqrt(self.a3*vc**2+self.a4*wc**2),size)
         #include a gamma that accounts for imperfect heading
-        gama = np.random.normal(0, np.sqrt(self.a5*vc**2+self.a6*wc**2))
+        gama = noise*np.random.normal(0, np.sqrt(self.a5*vc**2+self.a6*wc**2),size)
 
         #propagate states
         x_new = xt - v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(wrap(tht+w_hat*self.dt))

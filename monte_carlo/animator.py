@@ -9,7 +9,6 @@ class Animator:
 
         #hats are predicted states
         #Xk are the particles
-
         #make states and estimates global
         self.xhat = xhat
         self.yhat = yhat
@@ -47,7 +46,7 @@ class Animator:
 
             robot.set_data(xdata,ydata)
             arrow.set_data(xpoint, ypoint)
-            particles.set_data(Xk[0][:,0], Xk[0][:,1])
+            particles.set_data(Xk[0][0,:], Xk[0][1,:])
 
             return robot, arrow, particles
 
@@ -64,7 +63,7 @@ class Animator:
             #set the animation elements
             robot.set_data(xdata, ydata)
             arrow.set_data(xpoint, ypoint)
-            particles.set_data(Xk[i][:,0], Xk[i][:,1])
+            particles.set_data(Xk[i][0,:], Xk[i][1,:])
 
             return robot, arrow, particles
 
