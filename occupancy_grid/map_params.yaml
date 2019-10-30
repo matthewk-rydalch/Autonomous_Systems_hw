@@ -1,0 +1,16 @@
+alpha: 1
+beta: 5 #in degrees!!!
+z_max: 150
+
+xlim: 100
+ylim: 100
+hit: .65
+nohit: .35
+
+
+map0: .5
+
+
+#he plots the true world, and then fills the map in another color.
+#He also animates the movement of the robot
+#There are a few cells where the robot jumps

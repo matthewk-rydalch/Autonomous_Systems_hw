@@ -15,9 +15,9 @@ class Animator:
 		location = [xt[0], xt[1]]
 		# robot = np.array([location+[3,3],location+[-3,3],\
 		# 	location+[-3,-3],location+[3,-3]])
-		# robot = np.array([50,50], dtype=np.int32)
-		# set_trace()
-		# cv2.polylines(np.uint8(resized), robot, isClosed=False, color=(255,0,0))
+		robot = np.array([50,50], dtype=np.int32)
+		set_trace()
+		cv2.polylines(np.uint8(resized), robot, isClosed=False, color=(255,0,0))
 		# cv2.fillPoly(np.uint8(resized), np.int32(robot), 255)
 		cv2.imshow('grid', resized)
 		cv2.waitKey(10)

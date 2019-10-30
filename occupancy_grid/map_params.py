@@ -1,6 +1,6 @@
 import numpy as np
 
-class Map_params:
+class MapParams:
     def __init__(self):
         self.alpha = 1
         self.beta = 5
@@ -11,7 +11,7 @@ class Map_params:
         self.hit = .65
         self.nohit = .35
 
-        self.map = 0.5*np.ones((self.xlim,self.ylim))
+        self.map0 = 0.5
 
         #he plots the true world, and then fills the map in another color.
         #He also animates the movement of the robot
