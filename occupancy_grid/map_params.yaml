@@ -1,14 +1,14 @@
-alpha: 1
-beta: 5 #in degrees!!!
-z_max: 150
+alpha: 1.0
+beta: 2.0 #in degrees!!!
+z_max: 150.0
 
 xlim: 100
 ylim: 100
-hit: .65
-nohit: .35
+hit: 0.65
+nohit: 0.35
 
 
-map0: .5
+map0: 0.5
 
 
 #he plots the true world, and then fills the map in another color.
