@@ -13,13 +13,13 @@ class OcpGridMap:
         p0 = self.map0
         p_occ = self.hit
         p_free = self.nohit
-        self.l0 = np.log(p0/(1-p0))
-        self.l_occ = np.log(p_occ/(1-p_occ))
-        self.l_free = np.log(p_free/(1-p_free))
+        self.l0 = np.log(p0/(1.0-p0))
+        self.l_occ = np.log(p_occ/(1.0-p_occ))
+        self.l_free = np.log(p_free/(1.0-p_free))
         self.free = 0
         self.cell0 = 0
         self.occ = 0
-        self.beta = self.beta*math.pi/180
+        self.beta = self.beta*math.pi/180.0
         #
 
     def ocp_grid_map(self, lprev_i, xt, zt):
@@ -38,15 +38,14 @@ class OcpGridMap:
 
     def inverse_sensor_model(self, mi, xt, zt):
         ri = np.sqrt((mi[0]-xt[0])**2+(mi[1]-xt[1])**2) #range
-        #arctan2?
-        phi = np.arctan((mi[1]-xt[1])/(mi[0]-xt[0])) - xt[2] #bearing
-        k = np.argmin(abs(phi-zt[1])) #finding out which beam would reach that cell
-
-        if ri > np.minimum(self.z_max,zt[0][k]+self.alpha/2) or abs(phi-zt[1][k])>self.beta/2: #check if cell is in view 
+        phi = utils.wrap(np.arctan2((mi[1]-xt[1]),(mi[0]-xt[0])) - xt[2]) #bearing
+        k = np.argmin(abs(utils.wrap(phi-zt[1]))) #finding out which beam would reach that cell
+        #bradie said not to include wrapping on this
+        if ri > np.minimum(self.z_max,zt[0][k]+self.alpha/2.0) or abs(utils.wrap(phi-zt[1][k]))>self.beta/2.0: #check if cell is in view 
             # print('l0')
             # self.cell0 = self.cell0+1
             return self.l0 #not detecting cell
-        elif zt[0][k] < self.z_max and abs(ri-zt[0][k])<self.alpha/2: #check if cell is hit
+        elif zt[0][k] < self.z_max and abs(ri-zt[0][k])<self.alpha/2.0: #check if cell is hit
             # print('l_occ')
             # self.occ = self.occ+1
             return self.l_occ

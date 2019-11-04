@@ -6,26 +6,15 @@ from matplotlib import animation
 import cv2
 
 class Animator:
-	def animator(self, map, xt):
+	def animator(self, grid, xt):
 		
-		x_size = 1000
-		y_size = 1000
+		scale = 9
+		x_size = 100*scale
+		y_size = 100*scale
 		size = (x_size, y_size)
-		resized = cv2.resize(map, size, interpolation = cv2.INTER_AREA)
-		location = [xt[0], xt[1]]
-		# robot = np.array([location+[3,3],location+[-3,3],\
-		# 	location+[-3,-3],location+[3,-3]])
-		# robot = np.array([50,50], dtype=np.int32)
-		# set_trace()
-		# cv2.polylines(np.uint8(resized), robot, isClosed=False, color=(255,0,0))
-		# cv2.fillPoly(np.uint8(resized), np.int32(robot), 255)
+		
+		resized = cv2.resize(grid.T, size, interpolation = cv2.INTER_AREA)
+		location = (int(xt[0]*scale), int(xt[1]*scale))
+		cv2.circle(resized,location,2*scale,(255,255,0),-1)
 		cv2.imshow('grid', resized)
-		cv2.waitKey(10)
-
-
-# a3 = np.array( [[[10,10],[100,10],[100,100],[10,100]]], dtype=np.int32 )
-# im = np.zeros([240,320],dtype=np.uint8)
-# cv2.fillPoly( im, a3, 255 )
-
-# plt.imshow(im)
-# plt.show()
+		cv2.waitKey(1)
