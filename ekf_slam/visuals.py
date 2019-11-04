@@ -8,13 +8,13 @@ license: BSD
 Please feel free to use and modify this, but keep the above information. Thanks!
 """
 
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import animation
-from IPython.core.debugger import set_trace
-from rob_2wh import rob_2wh
+# import numpy as np
+# from matplotlib import pyplot as plt
+# from matplotlib import animation
+# from IPython.core.debugger import set_trace
+# from rob_2wh import rob_2wh
 
-class visualizer:
+class Visualizer:
     def animator(self, x, y, th, xhat, yhat, thhat, elements):
         self.xtru = x
         self.ytru = y
