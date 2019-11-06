@@ -23,8 +23,8 @@ class Animator:
 		
 		resized = cv2.resize(grid_rotate, size, interpolation = cv2.INTER_AREA)
 		# location = (int(xt[0]*scale), int(xt[1]*scale))
-		location = (int(xt[0]*scale), int(xt[1]*scale))@rotate
-		location = (int(location[0]),int(location[1]))
+		location = (int(xt[0]), int(xt[1]))@rotate
+		location = (int(location[0]*scale),int(location[1]*scale))
 		cv2.circle(resized,location,2*scale,(255,255,0),-1)
 		cv2.imshow('grid', resized)
 		cv2.waitKey(1)
