@@ -6,7 +6,7 @@ from numpy.linalg import inv
 import utils
 
 class Slam:
-    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, alpha, dt):
+    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, alpha, dt, N):
         
         self.g = vel_motion_model
         self.h = model_sensor
@@ -15,14 +15,18 @@ class Slam:
         self.M = M
         self.alpha = alpha
         self.dt = dt
+        self.N = N
     #
 
-    def ekf(self, Mup, Sig_p, Ut, Zt):
+    def ekf(self, Mup, Sig_p, Ut, Zt, ct):
 
         ##propagation step
+        Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*self.N)).T), axis=0).T
         Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
-        Mu_bar = self.g(Ut, Mup, noise=0)
-        Sig_bar = Gt@Sig_p@Gt.T+Vt@Mt@Vt.T
+        Gt = np.eye(3+2*self.N,3+2*self.N)+Fx.T@Gt@Fx
+        Mu_bar = self.g(Ut, Mup, Fx, noise=0)
+        Sig_bar = Gt@Sig_p@Gt.T+Fx.T@Vt@Mt@Vt.T@Fx
+        set_trace()
 
         ##correction step
         Qt = [[self.sig_r**2, 0],\
@@ -47,9 +51,10 @@ class Slam:
         vt = Ut[0]
         wt = Ut[1]
         dt = self.dt
-        G = np.array([[1, 0, -vt/wt*math.cos(thp)+vt/wt*math.cos(utils.wrap(thp+wt*dt))],\
-            [0, 1, -vt/wt*math.sin(thp)+vt/wt*math.sin(utils.wrap(thp+wt*dt))],\
-            [0, 0, 1]])
+
+        G = np.array([[0, 0, -vt/wt*math.cos(thp)+vt/wt*math.cos(utils.wrap(thp+wt*dt))],\
+            [0, 0, -vt/wt*math.sin(thp)+vt/wt*math.sin(utils.wrap(thp+wt*dt))],\
+            [0, 0, 0]])
 
         V = np.array([[1/wt*(-math.sin(thp)+math.sin(utils.wrap(thp+wt*dt))), vt/(wt**2)*(math.sin(thp)-math.sin(utils.wrap(thp+wt*dt)))+vt/wt*(math.cos(utils.wrap(thp+wt*dt))*dt)],\
             [1/wt*(math.cos(thp)-math.cos(utils.wrap(thp+wt*dt))), -vt/(wt**2)*(math.cos(thp)-math.cos(utils.wrap(thp+wt*dt)))+vt/wt*(math.sin(utils.wrap(thp+wt*dt))*dt)],\
@@ -72,7 +77,7 @@ class Slam:
         return H
     #
 #initialization
-    #robot starts in its own reference fram all landmarks unknown
+    #robot starts in its own reference frame all landmarks unknown
 
 ##compare with ekf
 #prediction steps

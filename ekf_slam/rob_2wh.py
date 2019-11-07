@@ -10,12 +10,13 @@ class Rob2Wh:
     def __init__(self, dt, alpha, M, sig_r, sig_phi):
         self.dt = dt
         self.alpha = alpha
+        # self.M = np.array(np.split(M,int(len(M)/2))).T #just rearrange shape to match what was coded for ekf
         self.M = M
         self.sig_r = sig_r
         self.sig_phi = sig_phi
     #
 
-    def vel_motion_model(self, Ut, Mup, noise = 1):
+    def vel_motion_model(self, Ut, Mup, Fx, noise = 1):
 
         #commands and states
         vc = Ut[0]
@@ -31,14 +32,13 @@ class Rob2Wh:
         w_hat = wc + noise*np.random.normal(0, np.sqrt(self.alpha[2]*vc**2+self.alpha[3]*wc**2),size)
         #include a gamma that accounts for imperfect heading
         gama = noise*np.random.normal(0, np.sqrt(self.alpha[4]*vc**2+self.alpha[5]*wc**2),size)
+
         #propagate states
-        x_new = xt - v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(utils.wrap(tht+w_hat*self.dt))
-        y_new = yt + v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(utils.wrap(tht+w_hat*self.dt))
-        th_new = utils.wrap(tht + w_hat*self.dt)# + gama*self.dt)
+        Mu = Mup+Fx.T@np.array([-v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(utils.wrap(tht+w_hat*self.dt)),\
+                                v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(utils.wrap(tht+w_hat*self.dt)),\
+                                utils.wrap(tht + w_hat*self.dt + gama*self.dt)])
 
-        Xt = np.array([x_new,y_new,th_new])
-
-        return Xt
+        return Mu
     #
 
     def model_sensor(self, Mup, noise = 1):

@@ -39,16 +39,17 @@ class Visualizer:
         self.yz3 = zr3hat*np.cos(zb3hat)
         
 
-        mx1, my1, mx2, my2, mx3, my3 = self.M[0][0], self.M[0][1],\
-         self.M[1][0], self.M[1][1], self.M[2][0], self.M[2][1]
+        # mx1, my1, mx2, my2, mx3, my3 = self.M[0][0], self.M[0][1],\
+        #  self.M[1][0], self.M[1][1], self.M[2][0], self.M[2][1]
 
         fig, ax = plt.subplots()
         xtru, ytru, xdata, ydata, thdata, xhist, yhist, xpoint, ypoint = [], [], [], [], [], [], [], [], []
-        mx1_data, my1_data, mx2_data, my2_data, mx3_data, my3_data = [], [], [], [], [], []
+        # mx1_data, my1_data, mx2_data, my2_data, mx3_data, my3_data = [], [], [], [], [], []
         plt.axes(xlim=(-10, 10), ylim=(-10, 10))
-        plt.plot(mx1,my1,'g^')
-        plt.plot(mx2,my2,'g^')
-        plt.plot(mx3,my3,'g^')
+        for i in range(len(self.M)):
+            plt.plot(self.M[i][0],self.M[i][1],'g^')
+        # plt.plot(mx2,my2,'g^')
+        # plt.plot(mx3,my3,'g^')
         plt.plot(self.xhat,self.yhat, 'r')
         robot, = plt.plot([], [], 'ro', markersize=12, animated=True)
         line_hat, = plt.plot([], [], 'y', animated=True)
