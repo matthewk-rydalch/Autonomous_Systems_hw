@@ -18,13 +18,6 @@ class Slam:
     #
 
     def ekf(self, Mup, Sig_p, Ut, Zt):
-        
-        xp = Mup[0]
-        yp = Mup[1]
-        thp = Mup[2]
-        vt = Ut[0]
-        wt = Ut[1]
-        dt = self.dt
 
         ##propagation step
         Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
@@ -34,13 +27,6 @@ class Slam:
         ##correction step
         Qt = [[self.sig_r**2, 0],\
              [0, self.sig_phi**2]]
-        # Kt = 1
-        # i = 0
-        # Ht = self.correction_jacobians(self.M[i,:], Mu_bar)
-        # Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-        # Mu_bar = Mu_bar + np.array([Kt@(Zt[:,i]-self.h(Mu_bar, noise=0)[:,i])]).T
-        # Mu_bar[2] = utils.wrap(Mu_bar[2])
-        # Sig_bar = (np.eye(3)-Kt@Ht)@Sig_bar
         for i in range(len(self.M)):
             Ht = self.correction_jacobians(self.M[i,:], Mu_bar)
             Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
@@ -70,7 +56,7 @@ class Slam:
             [0, dt]])
 
         M = np.array([[self.alpha[0]*vt**2+self.alpha[1]*wt**2, 0],\
-            [0, self.alpha[2]*vt**2+self.alpha[3]*wt**2]])
+            [0.0, self.alpha[2]*vt**2+self.alpha[3]*wt**2]])
 
         return(G, V, M)
     

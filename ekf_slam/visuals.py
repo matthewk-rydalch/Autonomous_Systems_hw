@@ -49,6 +49,7 @@ class Visualizer:
         plt.plot(mx1,my1,'g^')
         plt.plot(mx2,my2,'g^')
         plt.plot(mx3,my3,'g^')
+        plt.plot(self.xhat,self.yhat, 'r')
         robot, = plt.plot([], [], 'ro', markersize=12, animated=True)
         line_hat, = plt.plot([], [], 'y', animated=True)
         line_tru, = plt.plot([], [], 'b', animated=True)

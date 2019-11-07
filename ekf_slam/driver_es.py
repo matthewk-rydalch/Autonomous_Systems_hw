@@ -55,7 +55,7 @@ viz = Visualizer(M)
 slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, M, alpha, dt)
 
 ###initial values
-Mup = np.array([[x0], [y0], [th0]])
+Mup = np.array([[x0+0.5], [y0-0.7], [th0-0.05]])
 Sig_p = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0,0.0,0.1]])
 time_steps = int(tf/dt)
 Xtru = np.array([[x0], [y0], [th0]])
@@ -70,7 +70,6 @@ for i in range(0,time_steps+1):
 
     Mu, Sig, K = slam.ekf(Mup,Sig_p,Ut,Zt)
 
-
     mu_hist.append(Mu)
     sig_hist.append(Sig)
     k_hist.append(K)
@@ -78,27 +77,8 @@ for i in range(0,time_steps+1):
     t_hist.append(t)
     z_hist.append(Zt)
 
-
     Mup = Mu
     Sig_p = Sig
 
-
-
-
-# size = len(mu)
-# x_hat = []
-# y_hat =[]
-# th_hat = []
-# sig_x = []
-# sig_y = []
-# sig_th = []
-# for i in range(size):
-#     x_hat.append(mu[i][0])
-#     y_hat.append(mu[i][1])
-#     th_hat.append(mu[i][2])
-#     sig_x.append(Sig[i][0][0])
-#     sig_y.append(Sig[i][1][1])
-#     sig_th.append(Sig[i][2][2])
 viz.animator(xtr_hist, mu_hist, time_steps, z_hist)
 viz.plotting(mu_hist, sig_hist, k_hist, xtr_hist, t_hist)
-# x_hat, xt, y_hat, yt, th_hat, tht, t, xe, ye, the, sig_x, sig_y, sig_th
