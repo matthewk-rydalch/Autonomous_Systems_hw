@@ -3,20 +3,22 @@ import numpy as np
 import math
 from IPython.core.debugger import set_trace
 from numpy.linalg import inv
+import utils
 
 class Slam:
-    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, dt):
+    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, alpha, dt):
         
         self.g = vel_motion_model
         self.h = model_sensor
         self.sig_r = sig_r
         self.sig_phi = sig_phi
         self.M = M
+        self.alpha = alpha
         self.dt = dt
     #
 
     def ekf(self, Mup, Sig_p, Ut, Zt):
-
+        
         xp = Mup[0]
         yp = Mup[1]
         thp = Mup[2]
@@ -25,47 +27,29 @@ class Slam:
         dt = self.dt
 
         ##propagation step
-        Gt, Vt, Mt = self.jacobians(Mup, Sig_p, Ut)
-        Mu_bar = g(Ut, Mup, noise=0)
+        Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
+        Mu_bar = self.g(Ut, Mup, noise=0)
         Sig_bar = Gt@Sig_p@Gt.T+Vt@Mt@Vt.T
 
         ##correction step
-        Qt, Ht = self.correction_jacobians()
-        Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-        Mu = Mu_bar + Kt@(Zt-self.h(Mu_bar, noise=0))
-        Sig = (np.eye(3)-Kt@Ht)@Sig_bar
-
-        # z_hathist = np.array([])
-        # Hhist = np.array([])
-        # Shist = np.array([])
-        # Khist = []
-        # c = [0, 1, 2]
-        # for  i in range(3):
-        #     j = c[i]
-
-        #     qt = (M[j][0]-Mu_bar[0])**2+(M[j][1]-Mu_bar[1])**2
-
-        #     zhat1 = math.sqrt(q)
-        #     zhat2 = self.wrap(np.arctan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0])))
-        #     zhat3 = mu_bar[2]
-        #     z_hat = np.array([[float(zhat1)],[float(self.wrap(zhat2-zhat3))]])
-        #     # z_hat = np.array([[float(zhat1)],[float(zhat2)]])
-
-        #     # print('zhat = ', z_hat)
-        #     # z_hat = np.array([math.sqrt(q)],\
-        #     #             [math.atan2((m[j][1]-mu_bar[1]),(m[j][0]-mu_bar[0]))-mu_bar[2]])
-
-        #     z_now = np.array([[float(z[j])], [float(z[j+3])]])
-
-        #     S = np.array(H@Sig_bar@H.T+Q)
-        #     K = np.array(Sig_bar@H.T@inv(S))
-        #     mu_bar = np.array(mu_bar+K@(self.wrap(z_now-z_hat)))
-        #     Sig_bar = np.array((np.eye(3)-K@H)@Sig_bar)
-
-        #     Khist.append(K)
-
-        # mu = mu_bar
-        # Sig = Sig_bar
+        Qt = [[self.sig_r**2, 0],\
+             [0, self.sig_phi**2]]
+        # Kt = 1
+        # i = 0
+        # Ht = self.correction_jacobians(self.M[i,:], Mu_bar)
+        # Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
+        # Mu_bar = Mu_bar + np.array([Kt@(Zt[:,i]-self.h(Mu_bar, noise=0)[:,i])]).T
+        # Mu_bar[2] = utils.wrap(Mu_bar[2])
+        # Sig_bar = (np.eye(3)-Kt@Ht)@Sig_bar
+        for i in range(len(self.M)):
+            Ht = self.correction_jacobians(self.M[i,:], Mu_bar)
+            Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
+            Mu_bar = Mu_bar + np.array([Kt@(Zt[:,i]-self.h(Mu_bar, noise=0)[:,i])]).T
+            Mu_bar[2] = utils.wrap(Mu_bar[2])
+            Sig_bar = (np.eye(3)-Kt@Ht)@Sig_bar
+        
+        Mu = Mu_bar
+        Sig = Sig_bar
 
         return(Mu, Sig, Kt)
     #
@@ -77,7 +61,6 @@ class Slam:
         vt = Ut[0]
         wt = Ut[1]
         dt = self.dt
-
         G = np.array([[1, 0, -vt/wt*math.cos(thp)+vt/wt*math.cos(utils.wrap(thp+wt*dt))],\
             [0, 1, -vt/wt*math.sin(thp)+vt/wt*math.sin(utils.wrap(thp+wt*dt))],\
             [0, 0, 1]])
@@ -91,21 +74,16 @@ class Slam:
 
         return(G, V, M)
     
-    def correction_jacobians(self, Mu_bar)
+    def correction_jacobians(self, m, Mu_bar):
 
         xt = Mu_bar[0]
         yt = Mu_bar[1]
         tht = Mu_bar[2]
+        q = (m[0]-xt)**2+(m[1]-yt)**2
+        H = np.squeeze(np.array([[-(m[0]-xt)/np.sqrt(q), -(m[1]-yt)/np.sqrt(q), np.array([0.0])],\
+                                [(m[1]-yt)/q, -(m[0]-xt)/q, np.array([-1.0])]]))
 
-        q = (M[0]-xt)**2+(M[1]-yt)**2
-
-        Q = [[self.sig_r**2, 0],\
-             [0, self.sig_phi**2]]
-
-        H = np.array([(-M[0]-xt)/np.sqrt(q), (-M[1]-yt)/np.sqrt(q), np.array([0.0])],\
-                     [(M[1]-yt)/q, (-M[0]-xt)/q, -1]])
-
-        return Q, H
+        return H
     #
 #initialization
     #robot starts in its own reference fram all landmarks unknown
