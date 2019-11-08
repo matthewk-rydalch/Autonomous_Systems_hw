@@ -17,7 +17,7 @@ from IPython.core.debugger import set_trace
 class Visualizer:
     def __init__(self, Mtr):
         self.Mtr = Mtr
-    def animator(self, Xtru, Mu, elements, Zt):
+    def animator(self, Xtru, Mu, m_hist, elements, Zt):
         Zt = np.array(Zt)
         self.xtru = np.array(Xtru)[:,0]
         self.ytru = np.array(Xtru)[:,1]
@@ -25,19 +25,20 @@ class Visualizer:
         self.xhat = np.array(Mu)[:,0]
         self.yhat = np.array(Mu)[:,1]
         self.thhat = np.array(Mu)[:,2]
-        zr1hat = Zt[:,0,0]
-        zr2hat = Zt[:,0,1]
-        zr3hat = Zt[:,0,2]
-        zb1hat = Zt[:,1,0]
-        zb2hat = Zt[:,1,1]
-        zb3hat = Zt[:,1,2]
-        self.xz1 = zr1hat*np.sin(zb1hat)
-        self.xz2 = zr2hat*np.sin(zb2hat)
-        self.xz3 = zr3hat*np.sin(zb2hat)
-        self.yz1 = zr1hat*np.cos(zb1hat)
-        self.yz2 = zr2hat*np.cos(zb2hat)
-        self.yz3 = zr3hat*np.cos(zb3hat)
-        
+        self.m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
+        # zr1hat = Zt[:,0,0]
+        # zr2hat = Zt[:,0,1]
+        # zr3hat = Zt[:,0,2]
+        # zb1hat = Zt[:,1,0]
+        # zb2hat = Zt[:,1,1]
+        # zb3hat = Zt[:,1,2]
+        # self.xz1 = zr1hat*np.sin(zb1hat)
+        # self.xz2 = zr2hat*np.sin(zb2hat)
+        # self.xz3 = zr3hat*np.sin(zb2hat)
+        # self.yz1 = zr1hat*np.cos(zb1hat)
+        # self.yz2 = zr2hat*np.cos(zb2hat)
+        # self.yz3 = zr3hat*np.cos(zb3hat)
+
 
         # mx1, my1, mx2, my2, mx3, my3 = self.M[0][0], self.M[0][1],\
         #  self.M[1][0], self.M[1][1], self.M[2][0], self.M[2][1]
@@ -55,6 +56,7 @@ class Visualizer:
         line_hat, = plt.plot([], [], 'y', animated=True)
         line_tru, = plt.plot([], [], 'b', animated=True)
         arrow, = plt.plot([], [], 'k*', markersize=3, animated=True)
+        # marker, = plt.scatter([], [], [], [], [])
         # marker1, = plt.plot([], [], 'r^', markersize=3, animated=True)
         # marker2, = plt.plot([], [], 'r^', markersize=3, animated=True)
         # marker3, = plt.plot([], [], 'r^', markersize=3, animated=True)
@@ -69,6 +71,7 @@ class Visualizer:
             line_hat.set_data(xhist,yhist)
             robot.set_data(xdata,ydata)
             arrow.set_data(xpoint, ypoint)
+            # marker.set_data(mx1, )
             # marker1.set_data(mx1_data,my1_data)
             # marker2.set_data(mx2_data,my2_data)
             # marker3.set_data(mx3_data,my3_data)
@@ -105,7 +108,7 @@ class Visualizer:
                             init_func=init, frames = 201, interval = 20, blit=True)
         plt.show()
 
-    def plotting(self, Mu, Sig, Xtru, t):
+    def plotting(self, Mu, Sig, Xtru, m_hist, t):
 
         #unpack variables
         x_hat = np.array(Mu)[:,0]
@@ -117,12 +120,14 @@ class Visualizer:
         xt = np.array(Xtru)[:,0]
         yt = np.array(Xtru)[:,1]
         tht = np.array(Xtru)[:,2]
+        m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
+
 
         #get error
         xe = x_hat - xt
         ye = y_hat - yt
         the = th_hat - tht
-        
+
 
         #calculate upper and lower bounds for covariance plot
         sigx_hi = 2*np.sqrt(sig_x)
@@ -147,6 +152,19 @@ class Visualizer:
         aXk[2].set_xlabel('time [s]')
         fig1.show()
 
+        mtr = self.Mtr
+        size = len(m_hist[0])
+        fig2, aXk = plt.subplots(size)
+        fig2.suptitle("marker locations")
+
+        for i in range(size):
+            aXk[i].plot(t, m_hist[:,i,0], label = "xhat")
+            aXk[i].plot(t, m_hist[:,i,1], label = "yhat")
+            aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][0],mtr[i][0]], label = "x")
+            aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][1],mtr[i][1]], label = "y")
+        aXk[i].legend(loc = "upper right")
+        aXk[i].set_xlabel('time(s)')
+        fig2.show()
         # fig2, aXk = plt.subplots(3)
         # fig2.suptitle("Covariance & Error vs. Time")
         # aXk[0].plot(t,xe, label="x error [m]")
@@ -164,4 +182,3 @@ class Visualizer:
         # aXk[2].set_xlabel('time [s]')
         # fig2.show()
     #
-

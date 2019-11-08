@@ -10,7 +10,7 @@ class Rob2Wh:
     def __init__(self, dt, alpha, Mtr, sig_r, sig_phi):
         self.dt = dt
         self.alpha = alpha
-        self.M = Mtr #true values
+        self.Mtr = Mtr #true values
         self.sig_r = sig_r
         self.sig_phi = sig_phi
     #
@@ -34,8 +34,8 @@ class Rob2Wh:
         gama = noise*np.random.normal(0, np.sqrt(self.alpha[4]*vc**2+self.alpha[5]*wc**2),size)
 
         #propagate states
-        Mu = Mup+Fx.T@np.array([-v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(utils.wrap(tht+w_hat*self.dt)),\
-                                v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(utils.wrap(tht+w_hat*self.dt)),\
+        Mu = Mup+Fx.T@np.array([-v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(tht+w_hat*self.dt),\
+                                v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(tht+w_hat*self.dt),\
                                 utils.wrap(w_hat*self.dt + gama*self.dt)])
 
         return Mu
@@ -48,8 +48,8 @@ class Rob2Wh:
         tht = Mup[2,:]
 
         #range components w/o sensor noise
-        difx = self.M[:,0]-xt
-        dify = self.M[:,1]-yt
+        difx = self.Mtr[:,0]-xt
+        dify = self.Mtr[:,1]-yt
 
         #range and bearing w/o sensor noise/truth
         zr_tru = np.sqrt(difx**2+dify**2)
@@ -57,8 +57,7 @@ class Rob2Wh:
 
         #add in sensor noise if noise is not specified as 0
         zr = zr_tru + noise*np.random.normal(0, self.sig_r)
-        zb = zb_tru - tht + noise*np.random.normal(0, self.sig_phi) #for some reason I can't wrap my bearing or there are major errors
-
+        zb = utils.wrap(zb_tru - tht + noise*np.random.normal(0, self.sig_phi))
         z = np.array([zr,zb])
 
         return(z)

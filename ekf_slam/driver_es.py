@@ -18,7 +18,10 @@ from slam_ekf import Slam
 ############################################
 ####given parameters
 alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01]) #velocity noise model characteristict
-Mtr = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-4.0], [7.0,8.0], [-7.0,-8.0]]) #actual landmark locations
+Mtr = np.array([[6.0,4.0], [-7.0,-8.0], [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0]])#,\
+                #[-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
+                #[3.0,-9.0], [-2.0,-8.0], [6.0,4.0], [7.0,-3.0], [-7.0,-1.0],\
+                # [6.0,5.0], [5.0,-8.0], [-6.0,-4.0], [7.0,-2.0], [9.0,-1.0]]) #actual landmark locations
 N = len(Mtr) #number of landmarks
 M = np.zeros((N,2))
 sig_r = 0.1 #sensor noise standard deviation
@@ -50,6 +53,7 @@ sig_hist = []
 xtr_hist = []
 t_hist = []
 z_hist = []
+marker_hist = []
 
 ###initial values
 ##getting initial Sig_p
@@ -68,19 +72,20 @@ Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*N)).T), axis=0).T
 ###instatiate objects
 rob = Rob2Wh(dt, alpha, Mtr, sig_r, sig_phi)
 viz = Visualizer(Mtr)
-slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, M, alpha, dt, N, Fx)
+slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, alpha, dt, N, Fx)
 
 ###go through algorithm for each time step
 for i in range(0,time_steps+1):
 
     t = i*dt
     Ut = rob.generate_command(t)
+    Xtru = rob.vel_motion_model(Ut, Xtru, Fx)
     Zt = rob.model_sensor(Xtru)
-    Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise = 0)
     ct = N
 
     Mu, Sig = slam.ekf(Mup, Sig_p, Ut, Zt, ct)
     xhat_hist.append(Mu[0:3])
+    marker_hist.append(Mu[3:2*N+3])
     sig_hist.append(Sig)
     xtr_hist.append(Xtru[0:3])
     t_hist.append(t)
@@ -90,5 +95,5 @@ for i in range(0,time_steps+1):
     Sig_p = Sig
 
 
-viz.animator(xtr_hist, xhat_hist, time_steps, z_hist)
-viz.plotting(xhat_hist, sig_hist, xtr_hist, t_hist)
+viz.animator(xtr_hist, xhat_hist, marker_hist, time_steps, z_hist)
+viz.plotting(xhat_hist, sig_hist, xtr_hist, marker_hist, t_hist)
