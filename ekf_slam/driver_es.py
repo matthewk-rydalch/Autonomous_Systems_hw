@@ -95,4 +95,4 @@ for i in range(0,time_steps+1):
     Sig_p = Sig
 
 viz.plotting(xhat_hist, sig_hist, xtr_hist, marker_hist, t_hist)
-viz.animator(xtr_hist, xhat_hist, sig_hist, marker_hist, time_steps, z_hist)
+viz.animator(xtr_hist, xhat_hist, sig_hist, marker_hist, time_steps)
