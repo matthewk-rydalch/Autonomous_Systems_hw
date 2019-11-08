@@ -6,10 +6,9 @@ from numpy.linalg import inv
 import utils
 
 class Slam:
-    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, alpha, dt, N, Fx):
+    def __init__(self, vel_motion_model, sig_r, sig_phi, alpha, dt, N, Fx, Mtr):
 
         self.g = vel_motion_model
-        self.h = model_sensor
         self.sig_r = sig_r
         self.sig_phi = sig_phi
         self.alpha = alpha
@@ -17,7 +16,7 @@ class Slam:
         self.N = N
         self.Fx = Fx
         self.j = [0]*N #used to tell if variable has been initialized
-
+        self.Mtr = Mtr
         #calculate Fxj's since they are constant
         self.Fxj = []
         for j in range(1,N+1):
@@ -45,14 +44,22 @@ class Slam:
         Qt = np.array([[self.sig_r**2, 0],\
              [0, self.sig_phi**2]])
 
-        for j in range(ct):
+        for j in ct:
+
             #initialize marker if it has not been seen already
-            if self.j[j]==0:  
+            if self.j[j]==0:
+                # [Mub[3+2*j],Mub[4+2*j]]=self.Mtr[j]               
                 Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
                 self.j[j]=1 #variable used to tell if already initialized
 
-            #see corection_jacobians for lines 12-16 of the algorithm in the book
-            Ht, zhat = self.correction_jacobians(Mub, j)
+            delta = np.array([Mub[3+2*j]-Mub[0],\
+                    Mub[4+2*j]-Mub[1]])
+            q = delta.T@delta
+            zhat = np.array([np.sqrt(q[0]), utils.wrap(np.arctan2(delta[1],delta[0])-Mub[2])])
+
+            H_lo = np.squeeze(np.array([[-np.sqrt(q[0])*delta[0], -np.sqrt(q[0])*delta[1], np.array([0.0]), np.sqrt(q[0])*delta[0], np.sqrt(q[0])*delta[1]],\
+                                        [delta[1], -delta[0], -q[0], -delta[1], delta[0]]]))
+            Ht = 1/q[0]*H_lo@self.Fxj[j]
             Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
             difz = Zt[:,j]-np.squeeze(zhat)
             difz[1] = utils.wrap(difz[1])
@@ -86,20 +93,6 @@ class Slam:
             [0.0, self.alpha[2]*vt**2+self.alpha[3]*wt**2]])
 
         return(G, V, M)
-
-    def correction_jacobians(self, Mub, j):
-        #compute expected observation
-        delta = np.array([Mub[3+2*j]-Mub[0],\
-                            Mub[4+2*j]-Mub[1]])
-        q = delta.T@delta
-        zhat = np.array([np.sqrt(q[0]), utils.wrap(np.arctan2(delta[1],delta[0])-Mub[2])])
-
-        H_lo = np.squeeze(np.array([[-np.sqrt(q[0])*delta[0], -np.sqrt(q[0])*delta[1], np.array([0.0]), np.sqrt(q[0])*delta[0], np.sqrt(q[0])*delta[1]],\
-                                    [delta[1], -delta[0], -q[0], -delta[1], delta[0]]]))
-
-        H = 1/q[0]*H_lo@self.Fxj[j]
-
-        return H, zhat
     #
     def initialize_marker(self, Mub, Zt, j):
         mubx = Mub[0]
@@ -112,16 +105,3 @@ class Slam:
         mujy = muby+rt*np.sin(phi_t+mubth)
 
         return mujx, mujy
-    #covariance:
-        #jacobian of the motion (pose jacobian) is the same, but an identity matrix is used for the markers.  See slides update covariance
-        #previous sigma is a matrix of covariances of the pose, markers, and their correlations.
-    #extra steps
-        #Fx needs to be applied as in slide 41.  Rtx is the pose noise.  We don't use the measurment noise like we used before.  They won't be functions of the speed.
-
-#measurment update
-    #when you first see a landmark you have to initialize it
-    #we use the belief of the robot location to intialize the landmarks
-    #use low-dim space to get the jacobian of markers slide 46
-    #we do little jacobian calculations and then we map them into the complete jacobian.
-    #you don't necissarily need to make these f matrices and multiply them.  You can just place them where you know they should go.
-    #Once we have H everything mostly works the same.

@@ -41,7 +41,7 @@ class Rob2Wh:
         return Mu
     #
 
-    def model_sensor(self, Mup, noise = 1):
+    def model_sensor(self, Mup, fov=360, noise = 1):
 
         #states
         xt = Mup[0,:]
@@ -59,9 +59,11 @@ class Rob2Wh:
         #add in sensor noise if noise is not specified as 0
         zr = zr_tru + noise*np.random.normal(0, self.sig_r)
         zb = utils.wrap(zb_tru + noise*np.random.normal(0, self.sig_phi))
-        z = np.array([zr,zb])
 
-        return(z)
+        zt = np.array([zr,zb])
+        ct = self.field_of_view(fov, zb)
+
+        return(zt, ct)
     #
     def generate_command(self, t):
         vc_new = 1+0.5*np.cos(2*np.pi*0.2*t)
@@ -69,3 +71,10 @@ class Rob2Wh:
 
         return vc_new, wc_new
     #
+    def field_of_view(self, fov, Zb):
+        ct = []
+        for i in range(len(Zb)):
+            if abs(Zb[i]) <= 1.0/2.0*fov:
+                ct.append(i)
+
+        return ct
