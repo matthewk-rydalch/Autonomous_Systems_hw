@@ -27,22 +27,28 @@ class Visualizer:
         self.thhat = np.array(Mu)[:,2]
         self.m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
         m_end = self.m_hist[len(self.m_hist)-1]
-        sig_end = sig_hist[len(sig_hist)-1]
-        sig_mark = sig_end[3:len(sig_end)].T
-        sig_mark = sig_mark[3:len(sig_mark)].T
-        #plotting covariance info
-        elps = np.zeros((int(len(sig_mark)/2),2,100))
-        for i in range(int(len(sig_mark)/2)):
+        epsilon = np.zeros((len(m_hist),int(len(m_hist[0])/2), 2, 100))
+        for k in range(len(m_hist)):
+            sig_end = sig_hist[k]
+            sig_mark = sig_end[3:len(sig_end)].T
+            sig_mark = sig_mark[3:len(sig_mark)].T
+            #plotting covariance info
+            elps = np.zeros((int(len(sig_mark)/2),2,100))
+            for i in range(int(len(sig_mark)/2)):
 
-            cov_mark = np.array([[sig_mark[2*i][2*i], sig_mark[2*i][2*i+1]],[sig_mark[2*i+1][2*i],sig_mark[2*i+1][2*i+1]]])
-            U, S, vh = np.linalg.svd(cov_mark) #don't need vh
-            S = np.diag(S)
-            C = U@np.sqrt(S)
-            theta = np.linspace(0, 2*np.pi, 100)
-            circle =np.array([[np.cos(theta)],[np.sin(theta)]])
-            elps[i] = C@np.squeeze(circle)
-        self.xcov = elps[0][0]
-        self.ycov = elps[0][1]
+                cov_mark = np.array([[sig_mark[2*i][2*i], sig_mark[2*i][2*i+1]],[sig_mark[2*i+1][2*i],sig_mark[2*i+1][2*i+1]]])
+                U, S, vh = np.linalg.svd(cov_mark) #don't need vh
+                S = np.diag(S)
+                C = U@np.sqrt(S)
+                theta = np.linspace(0, 2*np.pi, 100)
+                circle =np.array([[np.cos(theta)],[np.sin(theta)]])
+                elps[i] = C@np.squeeze(circle)
+            epsilon[k] = elps
+        #epsilon structure: time, marker, x/y, elipse points
+        #I want x/y, marker, time, elipse point
+        set_trace()
+        self.xcov = epsilon[:,0,0]
+        self.ycov = epsilon[:,0,1]
 
         # zr1hat = Zt[:,0,0]
         # zr2hat = Zt[:,0,1]
@@ -67,7 +73,7 @@ class Visualizer:
         plt.axes(xlim=(-10, 10), ylim=(-10, 10))
         for i in range(len(self.Mtr)):
             plt.plot(self.Mtr[i][0],self.Mtr[i][1],'g^')
-            plt.plot(m_end[i][0]+elps[i][0],m_end[i][1]+elps[i][1], 'k')
+            # plt.plot(m_end[i][0]+epsilon[:,i,0],m_end[i][1]+elps[i][1], 'k')
 
         plt.plot(self.xhat,self.yhat, 'r')
         robot, = plt.plot([], [], 'ro', markersize=12, animated=True)
