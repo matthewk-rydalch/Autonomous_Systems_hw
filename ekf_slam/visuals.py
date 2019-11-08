@@ -17,7 +17,7 @@ from IPython.core.debugger import set_trace
 class Visualizer:
     def __init__(self, Mtr):
         self.Mtr = Mtr
-    def animator(self, Xtru, Mu, m_hist, elements, Zt):
+    def animator(self, Xtru, Mu, sig_hist, m_hist, elements, Zt):
         Zt = np.array(Zt)
         self.xtru = np.array(Xtru)[:,0]
         self.ytru = np.array(Xtru)[:,1]
@@ -26,6 +26,24 @@ class Visualizer:
         self.yhat = np.array(Mu)[:,1]
         self.thhat = np.array(Mu)[:,2]
         self.m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
+        m_end = self.m_hist[len(self.m_hist)-1]
+        sig_end = sig_hist[len(sig_hist)-1]
+        sig_mark = sig_end[3:len(sig_end)].T
+        sig_mark = sig_mark[3:len(sig_mark)].T
+        #plotting covariance info
+        elps = np.zeros((int(len(sig_mark)/2),2,100))
+        for i in range(int(len(sig_mark)/2)):
+
+            cov_mark = np.array([[sig_mark[2*i][2*i], sig_mark[2*i][2*i+1]],[sig_mark[2*i+1][2*i],sig_mark[2*i+1][2*i+1]]])
+            U, S, vh = np.linalg.svd(cov_mark) #don't need vh
+            S = np.diag(S)
+            C = U@np.sqrt(S)
+            theta = np.linspace(0, 2*np.pi, 100)
+            circle =np.array([[np.cos(theta)],[np.sin(theta)]])
+            elps[i] = C@np.squeeze(circle)
+        self.xcov = elps[0][0]
+        self.ycov = elps[0][1]
+
         # zr1hat = Zt[:,0,0]
         # zr2hat = Zt[:,0,1]
         # zr3hat = Zt[:,0,2]
@@ -49,13 +67,14 @@ class Visualizer:
         plt.axes(xlim=(-10, 10), ylim=(-10, 10))
         for i in range(len(self.Mtr)):
             plt.plot(self.Mtr[i][0],self.Mtr[i][1],'g^')
-        # plt.plot(mx2,my2,'g^')
-        # plt.plot(mx3,my3,'g^')
+            plt.plot(m_end[i][0]+elps[i][0],m_end[i][1]+elps[i][1], 'k')
+
         plt.plot(self.xhat,self.yhat, 'r')
         robot, = plt.plot([], [], 'ro', markersize=12, animated=True)
         line_hat, = plt.plot([], [], 'y', animated=True)
         line_tru, = plt.plot([], [], 'b', animated=True)
         arrow, = plt.plot([], [], 'k*', markersize=3, animated=True)
+        cov, = plt.plot([],[], 'k', animated=True)
         # marker, = plt.scatter([], [], [], [], [])
         # marker1, = plt.plot([], [], 'r^', markersize=3, animated=True)
         # marker2, = plt.plot([], [], 'r^', markersize=3, animated=True)
@@ -71,11 +90,12 @@ class Visualizer:
             line_hat.set_data(xhist,yhist)
             robot.set_data(xdata,ydata)
             arrow.set_data(xpoint, ypoint)
+            cov.set_data(self.xcov, self.ycov)
             # marker.set_data(mx1, )
             # marker1.set_data(mx1_data,my1_data)
             # marker2.set_data(mx2_data,my2_data)
             # marker3.set_data(mx3_data,my3_data)
-            return robot, line_hat, line_tru, arrow#, marker1, marker2, marker3
+            return robot, line_hat, line_tru, arrow, cov#, marker1, marker2, marker3
 
         def update(frame):
             i = int(frame)
@@ -93,6 +113,7 @@ class Visualizer:
             line_tru.set_data(xtru, ytru)
             line_hat.set_data(xdata, ydata)
             arrow.set_data(xpoint, ypoint)
+            cov.set_data(self.xcov,self.ycov)
             # mx1_data = self.xz1[i]
             # my1_data = self.yz1[i]
             # mx2_data = self.xz2[i]
@@ -102,7 +123,7 @@ class Visualizer:
             # marker1.set_data(mx1_data,my1_data)
             # marker2.set_data(mx2_data,my2_data)
             # marker3.set_data(mx3_data,my3_data)
-            return robot, line_hat, line_tru, arrow#, marker1, marker2, marker3
+            return robot, line_hat, line_tru, arrow, cov#, marker1, marker2, marker3
 
         ani = animation.FuncAnimation(fig, update,
                             init_func=init, frames = 201, interval = 20, blit=True)

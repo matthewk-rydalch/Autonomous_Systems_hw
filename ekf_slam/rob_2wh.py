@@ -18,7 +18,7 @@ class Rob2Wh:
     def vel_motion_model(self, Ut, Mup, Fx, noise = 1):
 
         #commands and states
-        # set_trace()
+
         vc = Ut[0]
         wc = Ut[1]
         xt = Mup[0]
@@ -42,6 +42,7 @@ class Rob2Wh:
     #
 
     def model_sensor(self, Mup, noise = 1):
+
         #states
         xt = Mup[0,:]
         yt = Mup[1,:]

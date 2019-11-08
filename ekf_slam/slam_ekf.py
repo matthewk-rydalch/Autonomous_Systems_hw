@@ -44,6 +44,7 @@ class Slam:
         ##correction step
         Qt = np.array([[self.sig_r**2, 0],\
              [0, self.sig_phi**2]])
+
         for j in range(ct):
             #initialize marker if it has not been seen already
             if self.j[j]==0:  
