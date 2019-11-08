@@ -18,9 +18,9 @@ from slam_ekf import Slam
 ############################################
 ####given parameters
 alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01]) #velocity noise model characteristict
-Mtr = np.array([[6.0,4.0], [-7.0,-8.0], [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0]])#,\
-                #[-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
-                #[3.0,-9.0], [-2.0,-8.0], [6.0,4.0], [7.0,-3.0], [-7.0,-1.0],\
+Mtr = np.array([[6.0,4.0], [-7.0,-8.0]])#, [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0],\
+                # [-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
+                # [3.0,-9.0], [-2.0,-8.0], [6.0,4.0], [7.0,-3.0], [-7.0,-1.0],\
                 # [6.0,5.0], [5.0,-8.0], [-6.0,-4.0], [7.0,-2.0], [9.0,-1.0]]) #actual landmark locations
 N = len(Mtr) #number of landmarks
 M = np.zeros((N,2))
@@ -80,7 +80,7 @@ for i in range(0,time_steps+1):
     t = i*dt
     Ut = rob.generate_command(t)
     Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise=1)
-    Zt = rob.model_sensor(Xtru, noise=1)
+    Zt = rob.model_sensor(Xtru, noise=0)
     ct = N
 
     Mu, Sig = slam.ekf(Mup, Sig_p, Ut, Zt, ct)

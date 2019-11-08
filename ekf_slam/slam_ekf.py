@@ -42,8 +42,8 @@ class Slam:
         Sig_bar = Gt@Sig_p@Gt.T+Fx.T@Vt@Mt@Vt.T@Fx
 
         ##correction step
-        Qt = [[self.sig_r**2, 0],\
-             [0, self.sig_phi**2]]
+        Qt = np.array([[self.sig_r**2, 0],\
+             [0, self.sig_phi**2]])
         for j in range(ct):
             #initialize marker if it has not been seen already
             if self.j[j]==0:  
