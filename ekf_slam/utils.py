@@ -21,12 +21,12 @@ def deg_wrap_360( angle ):
 #
 
 # def rad_wrap_pi( angle ):
-def wrap( angle ):
+def wrapf( angle ):
     # """wrap an angle in rads, -pi <= theta < pi"""
     # set_trace()
     angle -= 2*np.pi * np.floor((angle + np.pi) * inv_2pi)
     return angle
-def wrapf( angle ):
+def wrap( angle ):
     #just using this to find bugs
     return angle
 #
