@@ -18,7 +18,7 @@ from slam_ekf import Slam
 ############################################
 ####given parameters
 alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01]) #velocity noise model characteristict
-Mtr = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-4.0]])#, [7.0,8.0], [-7.0,-8.0]]) #actual landmark locations
+Mtr = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-4.0], [7.0,8.0], [-7.0,-8.0]]) #actual landmark locations
 N = len(Mtr) #number of landmarks
 M = np.zeros((N,2))
 sig_r = 0.1 #sensor noise standard deviation

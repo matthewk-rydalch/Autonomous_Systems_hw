@@ -54,7 +54,7 @@ class Slam:
             Ht, zhat = self.correction_jacobians(self.M[j,:], Mub, j)
             Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
             Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
-            Mub[2] = utils.wrap(Mub[2])
+            Mub[2] = utils.wrapf(Mub[2])
             Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
 
         Mu = Mub
