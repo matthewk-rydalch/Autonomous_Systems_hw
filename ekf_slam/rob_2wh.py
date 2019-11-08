@@ -18,6 +18,7 @@ class Rob2Wh:
     def vel_motion_model(self, Ut, Mup, Fx, noise = 1):
 
         #commands and states
+        # set_trace()
         vc = Ut[0]
         wc = Ut[1]
         xt = Mup[0]
@@ -35,7 +36,7 @@ class Rob2Wh:
         #propagate states
         Mu = Mup+Fx.T@np.array([-v_hat/w_hat*np.sin(tht)+v_hat/w_hat*np.sin(utils.wrap(tht+w_hat*self.dt)),\
                                 v_hat/w_hat*np.cos(tht)-v_hat/w_hat*np.cos(utils.wrap(tht+w_hat*self.dt)),\
-                                utils.wrap(tht + w_hat*self.dt + gama*self.dt)])
+                                utils.wrap(w_hat*self.dt + gama*self.dt)])
 
         return Mu
     #

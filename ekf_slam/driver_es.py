@@ -61,13 +61,13 @@ Sig_p = np.concatenate((mat1.T,mat4.T),axis=0)
 ##
 # Sig_p = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0,0.0,0.1]])
 time_steps = int(tf/dt)
-Xtru = np.concatenate((np.array([[x0,y0,th0]]).T,np.reshape(M, (len(M)*2,1))), axis=0) #combining position states to markers.  markers are ordered mx1 my1 mx2 my2 etc.
-Mup = Xtru
+Xtru = np.concatenate((np.array([[x0,y0,th0]]).T,np.reshape(Mtr, (N*2,1))), axis=0) #combining position states to markers.  markers are ordered mx1 my1 mx2 my2 etc.
+Mup = np.concatenate((np.array([[x0,y0,th0]]).T,np.reshape(M, (N*2,1))), axis=0) #combining position states to markers.  markers are ordered mx1 my1 mx2 my2 etc.
 Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*N)).T), axis=0).T
 
 ###instatiate objects
 rob = Rob2Wh(dt, alpha, Mtr, sig_r, sig_phi)
-viz = Visualizer(M)
+viz = Visualizer(Mtr)
 slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, M, alpha, dt, N, Fx)
 
 ###go through algorithm for each time step
@@ -90,5 +90,5 @@ for i in range(0,time_steps+1):
     Sig_p = Sig
 
 
-# viz.animator(xtr_hist, mu_hist, time_steps, z_hist)
+viz.animator(xtr_hist, xhat_hist, time_steps, z_hist)
 viz.plotting(xhat_hist, sig_hist, xtr_hist, t_hist)

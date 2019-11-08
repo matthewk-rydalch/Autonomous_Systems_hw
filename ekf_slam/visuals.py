@@ -15,8 +15,8 @@ from IPython.core.debugger import set_trace
 # from rob_2wh import rob_2wh
 
 class Visualizer:
-    def __init__(self, M):
-        self.M = M
+    def __init__(self, Mtr):
+        self.Mtr = Mtr
     def animator(self, Xtru, Mu, elements, Zt):
         Zt = np.array(Zt)
         self.xtru = np.array(Xtru)[:,0]
@@ -46,8 +46,8 @@ class Visualizer:
         xtru, ytru, xdata, ydata, thdata, xhist, yhist, xpoint, ypoint = [], [], [], [], [], [], [], [], []
         # mx1_data, my1_data, mx2_data, my2_data, mx3_data, my3_data = [], [], [], [], [], []
         plt.axes(xlim=(-10, 10), ylim=(-10, 10))
-        for i in range(len(self.M)):
-            plt.plot(self.M[i][0],self.M[i][1],'g^')
+        for i in range(len(self.Mtr)):
+            plt.plot(self.Mtr[i][0],self.Mtr[i][1],'g^')
         # plt.plot(mx2,my2,'g^')
         # plt.plot(mx3,my3,'g^')
         plt.plot(self.xhat,self.yhat, 'r')

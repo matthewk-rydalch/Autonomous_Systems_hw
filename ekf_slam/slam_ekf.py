@@ -41,22 +41,33 @@ class Slam:
         Mub = self.g(Ut, Mup, Fx, noise=0)
         Sig_bar = Gt@Sig_p@Gt.T+Fx.T@Vt@Mt@Vt.T@Fx
 
-        ##correction step
-        Qt = [[self.sig_r**2, 0],\
-             [0, self.sig_phi**2]]
-        for j in range(ct):
+        # ##correction step
+        # Qt = [[self.sig_r**2, 0],\
+        #      [0, self.sig_phi**2]]
+        # for j in range(ct):
 
-            #initialize marker if it has not been seen already
-            if self.M[0,0] == 0.0 and self.M[0,1] == 0.0: 
-                Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
+        #     #initialize marker if it has not been seen already
+        #     if self.M[0,0] == 0.0 and self.M[0,1] == 0.0: 
+        #         Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
 
-            #see corection_jacobians for lines 12-16 of the algorithm in the book                  
-            Ht, zhat = self.correction_jacobians(self.M[j,:], Mub, j)
-            Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-            Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
-            Mub[2] = utils.wrap(Mub[2])
-            Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
+        #     #see corection_jacobians for lines 12-16 of the algorithm in the book                  
+        #     Ht, zhat = self.correction_jacobians(self.M[j,:], Mub, j)
+        #     Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
+        #     Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
+        #     Mub[2] = utils.wrap(Mub[2])
+        #     Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
 
+        # j = 0
+        # #initialize marker if it has not been seen already
+        # if self.M[0,0] == 0.0 and self.M[0,1] == 0.0: 
+        #     Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
+
+        # #see corection_jacobians for lines 12-16 of the algorithm in the book                  
+        # Ht, zhat = self.correction_jacobians(self.M[j,:], Mub, j)
+        # Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
+        # Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
+        # Mub[2] = utils.wrap(Mub[2])
+        # Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
         Mu = Mub
         Sig = Sig_bar
 
