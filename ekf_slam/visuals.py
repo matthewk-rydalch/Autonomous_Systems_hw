@@ -105,7 +105,7 @@ class Visualizer:
                             init_func=init, frames = 201, interval = 20, blit=True)
         plt.show()
 
-    def plotting(self, Mu, Sig, K, Xtru, t):
+    def plotting(self, Mu, Sig, Xtru, t):
 
         #unpack variables
         x_hat = np.array(Mu)[:,0]
@@ -147,21 +147,21 @@ class Visualizer:
         aXk[2].set_xlabel('time [s]')
         fig1.show()
 
-        fig2, aXk = plt.subplots(3)
-        fig2.suptitle("Covariance & Error vs. Time")
-        aXk[0].plot(t,xe, label="x error [m]")
-        aXk[0].plot(t,sigx_hi, label="upper covariance")
-        aXk[0].plot(t,sigx_lo, label="lower covariance")
-        aXk[0].legend(loc = "upper right")
-        aXk[1].plot(t,ye, label="y error [m]")
-        aXk[1].plot(t,sigy_hi, label="upper covariance")
-        aXk[1].plot(t,sigy_lo, label="lower covariance")
-        aXk[1].legend(loc = "upper right")
-        aXk[2].plot(t,the, label="theta error [rad]")
-        aXk[2].plot(t,sigth_hi, label="upper covariance")
-        aXk[2].plot(t,sigth_lo, label="lower covariance")
-        aXk[2].legend(loc = "upper right")
-        aXk[2].set_xlabel('time [s]')
-        fig2.show()
+        # fig2, aXk = plt.subplots(3)
+        # fig2.suptitle("Covariance & Error vs. Time")
+        # aXk[0].plot(t,xe, label="x error [m]")
+        # aXk[0].plot(t,sigx_hi, label="upper covariance")
+        # aXk[0].plot(t,sigx_lo, label="lower covariance")
+        # aXk[0].legend(loc = "upper right")
+        # aXk[1].plot(t,ye, label="y error [m]")
+        # aXk[1].plot(t,sigy_hi, label="upper covariance")
+        # aXk[1].plot(t,sigy_lo, label="lower covariance")
+        # aXk[1].legend(loc = "upper right")
+        # aXk[2].plot(t,the, label="theta error [rad]")
+        # aXk[2].plot(t,sigth_hi, label="upper covariance")
+        # aXk[2].plot(t,sigth_lo, label="lower covariance")
+        # aXk[2].legend(loc = "upper right")
+        # aXk[2].set_xlabel('time [s]')
+        # fig2.show()
     #
 

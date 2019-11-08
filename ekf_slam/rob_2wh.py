@@ -7,11 +7,10 @@ import utils
 
 
 class Rob2Wh:
-    def __init__(self, dt, alpha, M, sig_r, sig_phi):
+    def __init__(self, dt, alpha, Mtr, sig_r, sig_phi):
         self.dt = dt
         self.alpha = alpha
-        # self.M = np.array(np.split(M,int(len(M)/2))).T #just rearrange shape to match what was coded for ekf
-        self.M = M
+        self.M = Mtr #true values
         self.sig_r = sig_r
         self.sig_phi = sig_phi
     #

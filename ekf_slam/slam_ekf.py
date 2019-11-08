@@ -6,7 +6,7 @@ from numpy.linalg import inv
 import utils
 
 class Slam:
-    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, alpha, dt, N):
+    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, M, alpha, dt, N, Fx):
         
         self.g = vel_motion_model
         self.h = model_sensor
@@ -16,32 +16,51 @@ class Slam:
         self.alpha = alpha
         self.dt = dt
         self.N = N
+        self.Fx = Fx
+
+        #calculate Fxj's since they are constant
+        self.Fxj = []
+        for j in range(1,N+1):
+            mat1 = np.eye(3,3)
+            mat2 = np.zeros((2,3))
+            mat3 = np.zeros((5,2*j-2))
+            mat4 = np.zeros((3,2))
+            mat5 = np.eye(2,2)
+            mat6 = np.zeros((5,2*N-2*j))
+            mat7 = np.concatenate((mat1,mat2),axis=0)
+            mat8 = np.concatenate((mat4,mat5),axis=0)
+            self.Fxj.append(np.concatenate((mat7.T,mat3.T,mat8.T,mat6.T),axis=0).T)
     #
 
     def ekf(self, Mup, Sig_p, Ut, Zt, ct):
 
         ##propagation step
-        Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*self.N)).T), axis=0).T
+        Fx = self.Fx
         Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
         Gt = np.eye(3+2*self.N,3+2*self.N)+Fx.T@Gt@Fx
-        Mu_bar = self.g(Ut, Mup, Fx, noise=0)
+        Mub = self.g(Ut, Mup, Fx, noise=0)
         Sig_bar = Gt@Sig_p@Gt.T+Fx.T@Vt@Mt@Vt.T@Fx
-        set_trace()
 
         ##correction step
         Qt = [[self.sig_r**2, 0],\
              [0, self.sig_phi**2]]
-        for i in range(len(self.M)):
-            Ht = self.correction_jacobians(self.M[i,:], Mu_bar)
+        for j in range(ct):
+
+            #initialize marker if it has not been seen already
+            if self.M[0,0] == 0.0 and self.M[0,1] == 0.0: 
+                Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
+
+            #see corection_jacobians for lines 12-16 of the algorithm in the book                  
+            Ht, zhat = self.correction_jacobians(self.M[j,:], Mub, j)
             Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-            Mu_bar = Mu_bar + np.array([Kt@(Zt[:,i]-self.h(Mu_bar, noise=0)[:,i])]).T
-            Mu_bar[2] = utils.wrap(Mu_bar[2])
-            Sig_bar = (np.eye(3)-Kt@Ht)@Sig_bar
-        
-        Mu = Mu_bar
+            Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
+            Mub[2] = utils.wrap(Mub[2])
+            Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
+
+        Mu = Mub
         Sig = Sig_bar
 
-        return(Mu, Sig, Kt)
+        return(Mu, Sig)
     #
     def prop_jacobians(self, Mup, Sig_p, Ut):
 
@@ -65,17 +84,32 @@ class Slam:
 
         return(G, V, M)
     
-    def correction_jacobians(self, m, Mu_bar):
+    def correction_jacobians(self, m, Mub, j):
 
-        xt = Mu_bar[0]
-        yt = Mu_bar[1]
-        tht = Mu_bar[2]
-        q = (m[0]-xt)**2+(m[1]-yt)**2
-        H = np.squeeze(np.array([[-(m[0]-xt)/np.sqrt(q), -(m[1]-yt)/np.sqrt(q), np.array([0.0])],\
-                                [(m[1]-yt)/q, -(m[0]-xt)/q, np.array([-1.0])]]))
+        #compute expected observation
+        delta = np.array([Mub[3+2*j]-Mub[0],\
+                            Mub[4+2*j]-Mub[1]])
+        q = delta.T@delta
+        zhat = np.array([np.sqrt(q[0]), np.arctan2(delta[1],delta[0])-Mub[2]])
 
-        return H
+        H_lo = np.squeeze(np.array([[np.sqrt(q[0])*delta[0], -np.sqrt(q[0])*delta[1], np.array([0.0]), np.sqrt(q[0])*delta[0], np.sqrt(q[0])*delta[1]],\
+                                    [delta[1], -delta[0], -q[0], -delta[1], delta[0]]]))
+
+        H = 1/q[0]*H_lo@self.Fxj[j]
+        
+        return H, zhat
     #
+    def initialize_marker(self, Mub, Zt, j):
+        mubx = Mub[0]
+        muby = Mub[1]
+        mubth = Mub[2]
+        rt = Zt[0][j]
+        phi_t = Zt[1][j]
+
+        mujx = mubx+rt*np.cos(utils.wrap(phi_t+mubth))
+        mujy = muby+rt*np.sin(utils.wrap(phi_t+mubth))
+
+        return mujx, mujy
 #initialization
     #robot starts in its own reference frame all landmarks unknown
 

@@ -18,9 +18,9 @@ from slam_ekf import Slam
 ############################################
 ####given parameters
 alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01]) #velocity noise model characteristict
-N = 5 #number of landmarks
+Mtr = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-4.0]])#, [7.0,8.0], [-7.0,-8.0]]) #actual landmark locations
+N = len(Mtr) #number of landmarks
 M = np.zeros((N,2))
-# M = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-4.0], [7.0,8.0], [-7.0,-8.0]]) #landmark locations
 sig_r = 0.1 #sensor noise standard deviation
 sig_phi = 0.05 #rad
 dt = 0.1
@@ -45,16 +45,11 @@ ygrid = [-10, 10]
 
 ###storage variables for plotting
 mu_hist = []
+xhat_hist = []
 sig_hist = []
-k_hist = []
 xtr_hist = []
 t_hist = []
 z_hist = []
-
-###instatiate objects
-rob = Rob2Wh(dt, alpha, M, sig_r, sig_phi)
-viz = Visualizer(M)
-slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, M, alpha, dt, N)
 
 ###initial values
 ##getting initial Sig_p
@@ -68,28 +63,32 @@ Sig_p = np.concatenate((mat1.T,mat4.T),axis=0)
 time_steps = int(tf/dt)
 Xtru = np.concatenate((np.array([[x0,y0,th0]]).T,np.reshape(M, (len(M)*2,1))), axis=0) #combining position states to markers.  markers are ordered mx1 my1 mx2 my2 etc.
 Mup = Xtru
+Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*N)).T), axis=0).T
+
+###instatiate objects
+rob = Rob2Wh(dt, alpha, Mtr, sig_r, sig_phi)
+viz = Visualizer(M)
+slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, M, alpha, dt, N, Fx)
 
 ###go through algorithm for each time step
 for i in range(0,time_steps+1):
 
     t = i*dt
     Ut = rob.generate_command(t)
-    # Zt = rob.model_sensor(Xtru)
-    # Xtru = rob.vel_motion_model(Ut, Xtru)
-    Zt = 5
-    ct = 5
+    Zt = rob.model_sensor(Xtru)
+    Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise = 0)
+    ct = N
 
-    Mu, Sig, K = slam.ekf(Mup,Sig_p,Ut,Zt, ct)
-
-    mu_hist.append(Mu)
+    Mu, Sig = slam.ekf(Mup, Sig_p, Ut, Zt, ct)
+    xhat_hist.append(Mu[0:3])
     sig_hist.append(Sig)
-    k_hist.append(K)
-    xtr_hist.append(Xtru)
+    xtr_hist.append(Xtru[0:3])
     t_hist.append(t)
     z_hist.append(Zt)
 
     Mup = Mu
     Sig_p = Sig
 
-viz.animator(xtr_hist, mu_hist, time_steps, z_hist)
-viz.plotting(mu_hist, sig_hist, k_hist, xtr_hist, t_hist)
+
+# viz.animator(xtr_hist, mu_hist, time_steps, z_hist)
+viz.plotting(xhat_hist, sig_hist, xtr_hist, t_hist)
