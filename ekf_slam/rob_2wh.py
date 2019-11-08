@@ -53,11 +53,11 @@ class Rob2Wh:
 
         #range and bearing w/o sensor noise/truth
         zr_tru = np.sqrt(difx**2+dify**2)
-        zb_tru = np.arctan2(dify,difx)
+        zb_tru = utils.wrap(np.arctan2(dify,difx)-tht)
 
         #add in sensor noise if noise is not specified as 0
         zr = zr_tru + noise*np.random.normal(0, self.sig_r)
-        zb = utils.wrap(zb_tru - tht + noise*np.random.normal(0, self.sig_phi))
+        zb = utils.wrap(zb_tru + noise*np.random.normal(0, self.sig_phi))
         z = np.array([zr,zb])
 
         return(z)

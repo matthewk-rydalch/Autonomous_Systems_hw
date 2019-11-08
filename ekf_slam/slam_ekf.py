@@ -16,6 +16,7 @@ class Slam:
         self.dt = dt
         self.N = N
         self.Fx = Fx
+        self.j = [0]*N #used to tell if variable has been initialized
 
         #calculate Fxj's since they are constant
         self.Fxj = []
@@ -45,12 +46,16 @@ class Slam:
              [0, self.sig_phi**2]]
         for j in range(ct):
             #initialize marker if it has not been seen already
-            if Mub[3+2*j] == 0.0 and Mub[4+2*j] == 0.0:  
+            if self.j[j]==0:  
                 Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
+                self.j[j]=1 #variable used to tell if already initialized
+
             #see corection_jacobians for lines 12-16 of the algorithm in the book
             Ht, zhat = self.correction_jacobians(Mub, j)
             Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-            Mub = Mub + np.array([Kt@(Zt[:,j]-np.squeeze(zhat))]).T
+            difz = Zt[:,j]-np.squeeze(zhat)
+            difz[1] = utils.wrap(difz[1])
+            Mub = Mub + np.array([Kt@difz]).T
             Mub[2] = utils.wrap(Mub[2])
             Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
 

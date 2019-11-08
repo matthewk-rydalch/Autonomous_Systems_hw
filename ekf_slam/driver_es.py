@@ -79,8 +79,8 @@ for i in range(0,time_steps+1):
 
     t = i*dt
     Ut = rob.generate_command(t)
-    Xtru = rob.vel_motion_model(Ut, Xtru, Fx)
-    Zt = rob.model_sensor(Xtru)
+    Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise=1)
+    Zt = rob.model_sensor(Xtru, noise=1)
     ct = N
 
     Mu, Sig = slam.ekf(Mup, Sig_p, Ut, Zt, ct)
@@ -94,6 +94,5 @@ for i in range(0,time_steps+1):
     Mup = Mu
     Sig_p = Sig
 
-
-viz.animator(xtr_hist, xhat_hist, marker_hist, time_steps, z_hist)
 viz.plotting(xhat_hist, sig_hist, xtr_hist, marker_hist, t_hist)
+viz.animator(xtr_hist, xhat_hist, marker_hist, time_steps, z_hist)
