@@ -15,8 +15,10 @@ from IPython.core.debugger import set_trace
 # from rob_2wh import rob_2wh
 
 class Visualizer:
-    def __init__(self, Mtr):
+    def __init__(self, Mtr, xgrid, ygrid):
         self.Mtr = Mtr
+        self.xgrid = xgrid
+        self.ygrid = ygrid
     def animator(self, Xtru, Mu, sig_hist, m_hist, elements):
 
         elipse_points = 100
@@ -52,7 +54,7 @@ class Visualizer:
 
         
         fig = plt.figure()
-        plt.axes(xlim=(-10, 10), ylim=(-10, 10))
+        plt.axes(xlim=(self.xgrid), ylim=(self.ygrid))
         
         ###static plots###
         plt.plot(self.xhat,self.yhat, 'y')
@@ -89,7 +91,7 @@ class Visualizer:
             return (robot, arrow) + tuple(cov)
 
         ani = animation.FuncAnimation(fig, update,
-                            init_func=init, frames = 201, interval = 20, blit=True)
+                            init_func=init, frames = self.time_len, interval = 20, blit=True)
         plt.show()
 
     def plotting(self, Mu, Sig, Xtru, m_hist, t):
@@ -149,6 +151,10 @@ class Visualizer:
         aXk[i].legend(loc = "upper right")
         aXk[i].set_xlabel('time(s)')
         fig2.show()
+
+        fig3 = plt.figure()
+        plt.imshow(Sig[len(Sig)-1])
+        
         # fig2, aXk = plt.subplots(3)
         # fig2.suptitle("Covariance & Error vs. Time")
         # aXk[0].plot(t,xe, label="x error [m]")
