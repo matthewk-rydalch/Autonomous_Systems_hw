@@ -6,9 +6,10 @@ from numpy.linalg import inv
 import utils
 
 class Slam:
-    def __init__(self, vel_motion_model, sig_r, sig_phi, alpha, dt, N, Fx, Mtr, particles):
+    def __init__(self, vel_motion_model, model_sensor, sig_r, sig_phi, alpha, dt, N, Fx, Mtr, particles):
 
         self.g = vel_motion_model
+        self.h = model_sensor
         self.sig_r = sig_r
         self.sig_phi = sig_phi
         self.alpha = alpha
@@ -18,6 +19,7 @@ class Slam:
         self.j = [0]*N #used to tell if variable has been initialized
         self.Mtr = Mtr
         self.particles = particles
+        self.p0 = 1.0/self.particles
         #calculate Fxj's since they are constant
         self.Fxj = []
         for j in range(1,N+1):
@@ -30,30 +32,59 @@ class Slam:
             mat7 = np.concatenate((mat1,mat2),axis=0)
             mat8 = np.concatenate((mat4,mat5),axis=0)
             self.Fxj.append(np.concatenate((mat7.T,mat3.T,mat8.T,mat6.T),axis=0).T)
+    
+        self.Qt = np.array([[self.sig_r**2, 0],\
+             [0, self.sig_phi**2]])
     #
 
-    def fast_slam(self, Yp, Ut, Zt, ct):
-
+    def fast_slam(self, Yp, Ut, zt, ct):
+        #initialize variables to hold particles before resampling
+        X_new = np.zeros((self.particles, 3))
+        Mu_new = np.zeros((self.particles, Yp[0][1].shape[0], Yp[0][1].shape[1]))
+        Sig_new = np.zeros((self.particles, Yp[0][2].shape[0], Yp[0][2].shape[1], Yp[0][2].shape[2]))
+        w_new = np.zeros((self.particles, Yp[0][1].shape[0]))
         for k in range(self.particles):
             #break out parts of Yp for kth particle
             Ypk = Yp[k]
-            Xp = Ypk[0]
+            Xp = np.array([Ypk[0]]).T
             Mup = Ypk[1]
             Sig_p = Ypk[2]
 
             #propogate pose (sample pose line 4 in algorithm?)
             Fx = np.eye(3,3)
-            Xt = self.g(Xp, Ut, Fx, noise=0)
+            Xt = self.g(Ut, Xp, Fx, noise=0)
 
+            #set the new mu to the old, and then change those that are seen
+            muk = Mup
+            Sig_k = Sig_p
+            wk = np.zeros(len(Sig_p))
             for j in ct:
                 #initialize marker if it has not been seen already
                 if self.j[j]==0:              
                     # Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
                     self.j[j]=1 #variable used to tell if already initialized
+                    hinv_function = self.initialize_marker(Xt, zt[:,j])
+                    muk[j] = hinv_function
+                    H = self.meas_jacobian(Xt, muk[j])
+                    Sig_k[j] = inv(H)@self.Qt@inv(H).T
+                    wk[j] = self.p0 #default importance weight
+                else:
+                    zhat, c_ignore = self.h(Xt, Mup[j])
+                    H = self.meas_jacobian(Xt, Mup[j])
+                    Q = H@Sig_p[j]@H.T+self.Qt
+                    K = Sig_p[j]@H.T@inv(Q)
+                    muk[j] = Mup[j] + K@(zt[:,j]-np.squeeze(zhat))
                     set_trace()
-                    h_function = initialize_marker(Zt[j],Xt)
-                    muj = inv(h_function)
+                    Sig_k[j] = (np.eye(2)-K@H)@Sig_p[j]
+                    wk[j] = abs(2*np.pi*Q)**(-1/2)@np.exp(-1/2*(zt[:,j]-zhat.T)@inv(Q)@(zt[:,j]-zhat.T).T)
+            X_new[k] = Xt[:,0]
+            Sig_new[k] = Sig_k
+            Mu_new[k] = muk
+            w_new[k] = wk
 
+        # Yt = np.zeros((Yp.shape))
+        # for k in range(self.particles):
+        #     Xkt = utils.low_var_sampler(X_new[k], w_new[k])
         # ##propagation step
         # Fx = self.Fx
         # Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
@@ -115,16 +146,24 @@ class Slam:
 
         return(G, V, M)
     #
+    def meas_jacobian(self, Xt, Muj):
+        delta = np.array([Muj[0]-Xt[0],\
+                Muj[1]-Xt[1]])
+        q = np.squeeze(delta.T@delta)
+        H = 1/q*np.array([[np.sqrt(q)*delta[0], np.sqrt(q)*delta[1]],\
+                         [-delta[1], delta[0]]])
     
-    def initialize_marker(self, Mub, Zt, j):
-        mubx = Mub[0]
-        muby = Mub[1]
-        mubth = Mub[2]
-        rt = Zt[0][j]
-        phi_t = Zt[1][j]
+        return np.squeeze(H)
+        
+    def initialize_marker(self, Xt, Zmt):
+        xt = Xt[0]
+        yt = Xt[1]
+        tht = Xt[2]
+        rt = Zmt[0]
+        phi_t = Zmt[1]
 
-        mujx = mubx+rt*np.cos(phi_t+mubth)
-        mujy = muby+rt*np.sin(phi_t+mubth)
+        mujx = xt+rt*np.cos(phi_t+tht)
+        mujy = yt+rt*np.sin(phi_t+tht)
 
         return mujx, mujy
 

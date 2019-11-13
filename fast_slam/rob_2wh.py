@@ -41,16 +41,16 @@ class Rob2Wh:
         return Mu
     #
 
-    def model_sensor(self, Mup, fov=360, noise = 1):
+    def model_sensor(self, Xt, Mup, fov=360, noise = 1):
 
         #states
-        xt = Mup[0,:]
-        yt = Mup[1,:]
-        tht = Mup[2,:]
+        xt = Xt[0,:]
+        yt = Xt[1,:]
+        tht = Xt[2,:]
 
         #range components w/o sensor noise
-        difx = self.Mtr[:,0]-xt
-        dify = self.Mtr[:,1]-yt
+        difx = Mup[0]-xt
+        dify = Mup[1]-yt
 
         #range and bearing w/o sensor noise/truth
         zr_tru = np.sqrt(difx**2+dify**2)

@@ -66,7 +66,7 @@ Fx = np.concatenate((np.eye(3,3).T,np.zeros((3,2*N)).T), axis=0).T
 ###instatiate objects
 rob = Rob2Wh(dt, alpha, Mtr, sig_r, sig_phi)
 viz = Visualizer(Mtr, xgrid, ygrid)
-slam = Slam(rob.vel_motion_model, sig_r, sig_phi, alpha, dt, N, Fx, Mtr, particles)
+slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, alpha, dt, N, Fx, Mtr, particles)
 
 #initialize states
 Xkt = slam.uniform_point_cloud(xgrid, ygrid, particles).T
@@ -89,7 +89,7 @@ for i in range(0,time_steps+1):
     t = i*dt
     Ut = rob.generate_command(t)
     Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise=1)
-    Zt, ct = rob.model_sensor(Xtru, fov, noise=1)
+    Zt, ct = rob.model_sensor(Xtru, Mtr, fov, noise=1)
 
     Mu, Sig = slam.fast_slam(Yp, Ut, Zt, ct)
     xhat_hist.append(Mu[0:3])
