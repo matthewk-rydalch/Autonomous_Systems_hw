@@ -36,9 +36,10 @@ def rad_wrap_2pi( angle ):
     return angle
 #
 
-def low_var_sampler(xt, wt):
-    M = xt.shape[1]
-    xbar = np.zeros((M,3)) #phi in algorithm
+def low_var_sampler(ynew, wt):
+    yt = []
+    M = ynew.shape[0]
+    # xbar = np.zeros((M,3)) #phi in algorithm
     r = np.random.uniform(0, 1.0/M, size=None) #starting point for comb
     c = wt[0]
     i = 0
@@ -47,8 +48,9 @@ def low_var_sampler(xt, wt):
         while U>c:
             i = i+1
             c = c+wt[i] #go to next weight
-        xbar[m] = xt[:,i]
-    return(xbar.T)
+        yt.append(ynew[i])
+    yt = np.array(yt)
+    return(yt)
 
 def read_param(param_file_name):
     """create dictionary of params from specified yaml file"""

@@ -93,7 +93,7 @@ class Visualizer:
                             init_func=init, frames = self.time_len, interval = 20, blit=True)
         plt.show()
 
-    def plotting(self, Mu, Sig, Xtru, m_hist, t):
+    def plotting(self, Mu, Sig, Xtru, t):#m_hist, t):
 
         #unpack variables
         x_hat = np.array(Mu)[:,0]
@@ -105,7 +105,7 @@ class Visualizer:
         xt = np.array(Xtru)[:,0]
         yt = np.array(Xtru)[:,1]
         tht = np.array(Xtru)[:,2]
-        m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
+        # m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
 
 
         #get error
@@ -137,22 +137,19 @@ class Visualizer:
         aXk[2].set_xlabel('time [s]')
         fig1.show()
 
-        mtr = self.Mtr
-        size = len(m_hist[0])
-        fig2, aXk = plt.subplots(size)
-        fig2.suptitle("marker locations")
+        # mtr = self.Mtr
+        # size = len(m_hist[0])
+        # fig2, aXk = plt.subplots(size)
+        # fig2.suptitle("marker locations")
 
-        for i in range(size):
-            aXk[i].plot(t, m_hist[:,i,0], label = "xhat")
-            aXk[i].plot(t, m_hist[:,i,1], label = "yhat")
-            aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][0],mtr[i][0]], label = "x")
-            aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][1],mtr[i][1]], label = "y")
-        aXk[i].legend(loc = "upper right")
-        aXk[i].set_xlabel('time(s)')
-        fig2.show()
-
-        fig3 = plt.figure()
-        plt.imshow(Sig[len(Sig)-1])
+        # for i in range(size):
+        #     aXk[i].plot(t, m_hist[:,i,0], label = "xhat")
+        #     aXk[i].plot(t, m_hist[:,i,1], label = "yhat")
+        #     aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][0],mtr[i][0]], label = "x")
+        #     aXk[i].plot([t[0],t[len(m_hist)-1]], [mtr[i][1],mtr[i][1]], label = "y")
+        # aXk[i].legend(loc = "upper right")
+        # aXk[i].set_xlabel('time(s)')
+        # fig2.show()
         
         # fig2, aXk = plt.subplots(3)
         # fig2.suptitle("Covariance & Error vs. Time")

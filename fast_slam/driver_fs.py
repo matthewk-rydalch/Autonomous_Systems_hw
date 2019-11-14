@@ -69,14 +69,15 @@ viz = Visualizer(Mtr, xgrid, ygrid)
 slam = Slam(rob.vel_motion_model, rob.model_sensor, sig_r, sig_phi, alpha, dt, N, Fx, Mtr, particles)
 
 #initialize states
-Xkt = slam.uniform_point_cloud(xgrid, ygrid, particles).T
+# Xkt = slam.uniform_point_cloud(xgrid, ygrid, particles).T
+Xkt = np.array([x0,y0,th0])
 Yp = []
 for i in range(particles):
     Sig_n = []
     for j in range(len(M)):
         Sig_n.append([[Sig_p[3,3],Sig_p[3,4]],[Sig_p[4,3],Sig_p[4,4]]])
     Sig_n = np.array(Sig_n)
-    Yk = [(Xkt[i], M, Sig_n)]
+    Yk = [(Xkt, M, Sig_n)]
     Yp.append(Yk)
 Yp = np.squeeze(np.array(Yp))
 ###
@@ -91,16 +92,21 @@ for i in range(0,time_steps+1):
     Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise=1)
     Zt, ct = rob.model_sensor(Xtru, Mtr, fov, noise=1)
 
-    Mu, Sig = slam.fast_slam(Yp, Ut, Zt, ct)
-    xhat_hist.append(Mu[0:3])
-    marker_hist.append(Mu[3:2*N+3])
-    sig_hist.append(Sig)
+    Yt = slam.fast_slam(Yp, Ut, Zt, ct)
+
+    #break up Yt
+    Xhat = Yt[:,0]
+    Mhat = Yt[:,1]
+    Sig_hat = Yt[:,2]
+    X_hist = np.mean(Xhat, axis=1)
+    xhat_hist.append(X_hist)
+    # marker_hist.append(Mu[3:2*N+3])
+    # sig_hist.append(Sig)
     xtr_hist.append(Xtru[0:3])
     t_hist.append(t)
-    z_hist.append(Zt)
+    # z_hist.append(Zt)
 
-    Mup = Mu
-    Sig_p = Sig
+    Yp = Yt
 
-# viz.plotting(xhat_hist, sig_hist, xtr_hist, marker_hist, t_hist)
+viz.plotting(xhat_hist, sig_hist, xtr_hist, t_hist)# marker_hist
 # viz.animator(xtr_hist, xhat_hist, sig_hist, marker_hist, time_steps)

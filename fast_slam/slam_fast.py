@@ -37,115 +37,65 @@ class Slam:
              [0, self.sig_phi**2]])
     #
 
-    def fast_slam(self, Yp, Ut, zt, ct):
+    def fast_slam(self, Yp, Ut, Zt, ct):
         #initialize variables to hold particles before resampling
-        X_new = np.zeros((self.particles, 3))
-        Mu_new = np.zeros((self.particles, Yp[0][1].shape[0], Yp[0][1].shape[1]))
-        Sig_new = np.zeros((self.particles, Yp[0][2].shape[0], Yp[0][2].shape[1], Yp[0][2].shape[2]))
-        w_new = np.zeros((self.particles, Yp[0][1].shape[0]))
+        w_new = []
+        Y_new = []
+
+        ###for each particle
         for k in range(self.particles):
+
             #break out parts of Yp for kth particle
-            Ypk = Yp[k]
-            Xp = np.array([Ypk[0]]).T
-            Mup = Ypk[1]
-            Sig_p = Ypk[2]
+            Xp, Mup, Sig_p = self.retrieve(Yp, k)
 
             #propogate pose (sample pose line 4 in algorithm?)
-            Fx = np.eye(3,3)
-            Xt = self.g(Ut, Xp, Fx, noise=0)
+            Xt = self.g(Ut, Xp, Fx = np.eye(3,3), noise=0)
 
-            #set the new mu to the old, and then change those that are seen
+            # if k == 999:
+            #     a = 1
+
+            ###for each marker
+            # set the new mu to the old, and then change those that are seen
             muk = Mup
             Sig_k = Sig_p
-            wk = np.zeros(len(Sig_p))
+            wj = np.zeros(len(ct))
             for j in ct:
-                #initialize marker if it has not been seen already
-                if self.j[j]==0:              
-                    # Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
+                
+                if self.j[j]==0:  #initialize marker if it has not been seen already
+
                     self.j[j]=1 #variable used to tell if already initialized
-                    hinv_function = self.initialize_marker(Xt, zt[:,j])
-                    muk[j] = hinv_function
-                    H = self.meas_jacobian(Xt, muk[j])
+                    muk[j] = self.initialize_marker(Zt[:,j], Xt) #h**-1
+                    H = self.meas_jacobian(Xt, muk[j]) #h prime
                     Sig_k[j] = inv(H)@self.Qt@inv(H).T
-                    wk[j] = self.p0 #default importance weight
+                    wj[j] = np.array([[self.p0]]) #default importance weight
                 else:
-                    zhat, c_ignore = self.h(Xt, Mup[j])
-                    H = self.meas_jacobian(Xt, Mup[j])
+                    zhat, c_ignore = self.h(Xt, np.array([Mup[j]]), fov = 360, noise = 0) #for this leave the fov at 360.  Markers are already canceled out by ct
+                    H = self.meas_jacobian(Xt, Mup[j]) #h prime
                     Q = H@Sig_p[j]@H.T+self.Qt
                     K = Sig_p[j]@H.T@inv(Q)
-                    muk[j] = Mup[j] + K@(zt[:,j]-np.squeeze(zhat))
-                    set_trace()
+                    muk[j] = Mup[j] + K@(Zt[:,j]-np.squeeze(zhat))
                     Sig_k[j] = (np.eye(2)-K@H)@Sig_p[j]
-                    wk[j] = abs(2*np.pi*Q)**(-1/2)@np.exp(-1/2*(zt[:,j]-zhat.T)@inv(Q)@(zt[:,j]-zhat.T).T)
-            X_new[k] = Xt[:,0]
-            Sig_new[k] = Sig_k
-            Mu_new[k] = muk
-            w_new[k] = wk
+                    wj[j] = np.linalg.det(2*np.pi*Q)**(-1/2)*np.exp(-1/2*(Zt[:,j]-zhat.T)@inv(Q)@(Zt[:,j]-zhat.T).T)
+            wj = self.normalize(wj)
+            wk = np.prod(wj)
+            Yk = np.array([Xt[:,0], muk, Sig_k])
 
-        # Yt = np.zeros((Yp.shape))
+            Y_new.append(Yk)
+            w_new.append(wk)
+
+        Y_new = np.array(Y_new)
+        # make weights vector and normalize
+        w_new = np.array(w_new)
+        wp_norm = self.normalize(w_new)
+        # weight_sum = sum(np.squeeze(w_new))
+        # wp_norm = np.squeeze(w_new) / np.squeeze(weight_sum)
         # for k in range(self.particles):
-        #     Xkt = utils.low_var_sampler(X_new[k], w_new[k])
-        # ##propagation step
-        # Fx = self.Fx
-        # Gt, Vt, Mt = self.prop_jacobians(Mup, Sig_p, Ut)
-        # Gt = np.eye(3+2*self.N,3+2*self.N)+Fx.T@Gt@Fx
-        # Mub = self.g(Ut, Mup, Fx, noise=0)
-        # Sig_bar = Gt@Sig_p@Gt.T+Fx.T@Vt@Mt@Vt.T@Fx
+        Yt = utils.low_var_sampler(Y_new, wp_norm)
 
-        # ##correction step
-        # Qt = np.array([[self.sig_r**2, 0],\
-        #      [0, self.sig_phi**2]])
-
-        # for j in ct:
-
-        #     #initialize marker if it has not been seen already
-        #     if self.j[j]==0:
-        #         # [Mub[3+2*j],Mub[4+2*j]]=self.Mtr[j]               
-        #         Mub[3+2*j], Mub[4+2*j] = self.initialize_marker(Mub, Zt, j)
-        #         self.j[j]=1 #variable used to tell if already initialized
-
-        #     delta = np.array([Mub[3+2*j]-Mub[0],\
-        #             Mub[4+2*j]-Mub[1]])
-        #     q = delta.T@delta
-        #     zhat = np.array([np.sqrt(q[0]), utils.wrap(np.arctan2(delta[1],delta[0])-Mub[2])])
-
-        #     H_lo = np.squeeze(np.array([[-np.sqrt(q[0])*delta[0], -np.sqrt(q[0])*delta[1], np.array([0.0]), np.sqrt(q[0])*delta[0], np.sqrt(q[0])*delta[1]],\
-        #                                 [delta[1], -delta[0], -q[0], -delta[1], delta[0]]]))
-        #     Ht = 1/q[0]*H_lo@self.Fxj[j]
-        #     Kt = Sig_bar@Ht.T@inv(Ht@Sig_bar@Ht.T+Qt)
-        #     difz = Zt[:,j]-np.squeeze(zhat)
-        #     difz[1] = utils.wrap(difz[1])
-        #     Mub = Mub + np.array([Kt@difz]).T
-        #     Mub[2] = utils.wrap(Mub[2])
-        #     Sig_bar = (np.eye(len(Kt))-Kt@Ht)@Sig_bar
-
-        # Mu = Mub
-        # Sig = Sig_bar
-
-        return(Mu, Sig)
+        # Yt = np.array(Yp)
+        return(Yt)
     #
-    def prop_jacobians(self, Mup, Sig_p, Ut):
 
-        xp = Mup[0]
-        yp = Mup[1]
-        thp = Mup[2]
-        vt = Ut[0]
-        wt = Ut[1]
-        dt = self.dt
-
-        G = np.array([[0, 0, -vt/wt*math.cos(thp)+vt/wt*math.cos(thp+wt*dt)],\
-            [0, 0, -vt/wt*math.sin(thp)+vt/wt*math.sin(thp+wt*dt)],\
-            [0, 0, 0]])
-
-        V = np.array([[1/wt*(-math.sin(thp)+math.sin(thp+wt*dt)), vt/(wt**2)*(math.sin(thp)-math.sin(thp+wt*dt))+vt/wt*(math.cos(thp+wt*dt)*dt)],\
-            [1/wt*(math.cos(thp)-math.cos(thp+wt*dt)), -vt/(wt**2)*(math.cos(thp)-math.cos(thp+wt*dt))+vt/wt*(math.sin(thp+wt*dt)*dt)],\
-            [0, dt]])
-
-        M = np.array([[self.alpha[0]*vt**2+self.alpha[1]*wt**2, 0],\
-            [0.0, self.alpha[2]*vt**2+self.alpha[3]*wt**2]])
-
-        return(G, V, M)
-    #
     def meas_jacobian(self, Xt, Muj):
         delta = np.array([Muj[0]-Xt[0],\
                 Muj[1]-Xt[1]])
@@ -155,7 +105,7 @@ class Slam:
     
         return np.squeeze(H)
         
-    def initialize_marker(self, Xt, Zmt):
+    def initialize_marker(self, Zmt, Xt):
         xt = Xt[0]
         yt = Xt[1]
         tht = Xt[2]
@@ -179,3 +129,19 @@ class Slam:
             Xk_prev[2][i] = np.random.uniform(low= -math.pi, high = math.pi, size = None)
 
         return(Xk_prev)
+    
+    def retrieve(self, Yp, k):
+        Ypk = Yp[k]
+        Xp = np.array([Ypk[0]]).T
+        Mup = Ypk[1]
+        Sig_p = Ypk[2]
+
+        return Xp, Mup, Sig_p
+
+    def normalize(self, w):
+
+        weight_sum = sum(w)
+        w_norm = np.squeeze(w) / np.squeeze(weight_sum)
+
+        return w_norm
+

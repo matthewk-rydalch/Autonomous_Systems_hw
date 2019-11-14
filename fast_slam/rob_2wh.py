@@ -49,8 +49,8 @@ class Rob2Wh:
         tht = Xt[2,:]
 
         #range components w/o sensor noise
-        difx = Mup[0]-xt
-        dify = Mup[1]-yt
+        difx = Mup[:,0]-xt
+        dify = Mup[:,1]-yt
 
         #range and bearing w/o sensor noise/truth
         zr_tru = np.sqrt(difx**2+dify**2)
