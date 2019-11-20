@@ -19,13 +19,15 @@ from slam_fast import Slam
 ############################################
 
 ###set parameters
-fov = 360 #field of view deg
+fov = 90 #field of view deg
 particles = 100
-alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01]) #velocity noise model characteristict
-Mtr = np.array([[6.0,4.0], [-7.0,-8.0], [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0],\
-                [-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
-                [3.0,-9.0], [-2.0,-8.0], [6.0,4.0], [7.0,-3.0], [-7.0,-1.0],\
-                [6.0,5.0], [5.0,-8.0], [-6.0,-4.0], [7.0,-2.0], [9.0,-1.0]]) #actual landmark locations
+alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.001, 0.001]) #velocity noise model characteristict
+Mtr = np.array([[6.0,4.0], [-7.0,8.0], [6.0,-1.0], [0.0,-9.0], [-8.0,-5.0],\
+                [1.0,1.0], [4.0,-4.0], [-5.0,3.0]]) #dr mclains locations
+# Mtr = np.array([[6.0,4.0], [-7.0,-8.0], [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0],\
+#                 [-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
+#                 [3.0,-9.0], [-2.0,-8.0], [6.0,4.0], [7.0,-3.0], [-7.0,-1.0],\
+#                 [6.0,5.0], [5.0,-8.0], [-6.0,-4.0], [7.0,-2.0], [9.0,-1.0]]) #actual landmark locations
 N = len(Mtr) #number of landmarks
 M = np.zeros((N,2))
 m = np.zeros((1,2))
@@ -35,7 +37,7 @@ sig_phi = 0.05 #rad
 dt = 0.1
 tf = 50
 x0 = 0.0 #initial states
-y0 = 0.0
+y0 = 5.0
 th0 = 0.0 #rad
 xgrid = [-15, 15] #map size
 ygrid = [-15, 15]
@@ -54,7 +56,7 @@ marker_hist = []
 ##getting initial Sig_p
 mat1 = np.zeros((2*N+3,3))
 mat2 = np.zeros((3,2*N))
-mat3 = np.diag(1000000*np.ones(2*N))
+mat3 = np.diag(100*np.ones(2*N))
 mat4 = np.concatenate((mat2,mat3),axis=0)
 Sig_p = np.concatenate((mat1.T,mat4.T),axis=0)
 ##

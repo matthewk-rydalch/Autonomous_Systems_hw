@@ -41,7 +41,7 @@ class Rob2Wh:
         return Mu
     #
 
-    def model_sensor(self, Xt, Mup, fov=360, noise = 1):
+    def model_sensor(self, Xt, Mup, fov=2*np.pi, noise = 1):
 
         #states
         xt = Xt[0,:]
@@ -66,8 +66,8 @@ class Rob2Wh:
         return(zt, ct)
     #
     def generate_command(self, t):
-        vc_new = 1+0.5*np.cos(2*np.pi*0.2*t)
-        wc_new = -0.2+2*np.cos(2*np.pi*0.6*t)
+        vc_new = 1+0.1*np.cos(2*np.pi*0.3*t)
+        wc_new = -0.2+0.1*np.cos(2*np.pi*0.2*t)
 
         return vc_new, wc_new
     #
