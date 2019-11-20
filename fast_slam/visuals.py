@@ -22,7 +22,7 @@ class Visualizer:
 
         elipse_points = 100
         self.time_len = len(m_hist)
-        self.marker_len = int(len(m_hist[0])/2)
+        self.marker_len = int(len(m_hist[0]))
 
         self.xtru = np.array(Xtru)[:,0]
         self.ytru = np.array(Xtru)[:,1]
@@ -36,20 +36,20 @@ class Visualizer:
         self.xcov = np.zeros((self.time_len,self.marker_len,elipse_points))
         self.ycov = np.zeros((self.time_len,self.marker_len, elipse_points))
         for k in range(self.time_len):
-            sig_end = sig_hist[k]
-            sig_mark = sig_end[0:len(sig_end)]
-            sig_mark = sig_mark[0:len(sig_mark)]
+            # sig_end = sig_hist[k]
+            # sig_mark = sig_end[0:len(sig_end)]
+            # sig_mark = sig_mark[0:len(sig_mark)]
+            sig_mark = sig_hist[k]
             for i in range(self.marker_len):
-                set_trace()
-                cov_mark = np.array([[sig_mark[2*i][2*i], sig_mark[2*i][2*i+1]],[sig_mark[2*i+1][2*i],sig_mark[2*i+1][2*i+1]]])
+                cov_mark = sig_mark[i]
                 U, S, vh = np.linalg.svd(cov_mark) #don't need vh
                 S = np.diag(S)
                 C = U@np.sqrt(S)
                 theta = np.linspace(0, 2*np.pi, elipse_points)
                 circle =np.array([[np.cos(theta)],[np.sin(theta)]])
                 elps = C@np.squeeze(circle)
-                self.xcov[k][i] = elps[0,:]+m_hist[k][2*i]
-                self.ycov[k][i] = elps[1,:]+m_hist[k][2*i+1]
+                self.xcov[k][i] = elps[0,:]+m_hist[k][i][0][0]
+                self.ycov[k][i] = elps[1,:]+m_hist[k][i][0][1]
 
 
 
