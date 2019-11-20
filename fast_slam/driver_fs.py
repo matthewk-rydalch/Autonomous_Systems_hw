@@ -20,7 +20,7 @@ from slam_fast import Slam
 
 ###set parameters
 fov = 360 #field of view deg
-particles = 50
+particles = 10
 alpha = np.array([0.1, 0.01, 0.01, 0.1, 0.01, 0.01])/10 #velocity noise model characteristict
 Mtr = np.array([[6.0,4.0], [-7.0,-8.0]])#, [6.0,-4.0], [7.0,-8.0], [-1.0,-1.0],\
                 # [-6.0,-4.0], [7.0,8.0], [-6.0,4.0], [-7.0,8.0], [1.0,1.0],\
@@ -33,7 +33,7 @@ m = np.zeros((1,2))
 sig_r = 0.1 #sensor noise standard deviation
 sig_phi = 0.05 #rad
 dt = 0.1
-tf = 50
+tf = 10
 x0 = 0.0 #initial states
 y0 = 0.0
 th0 = 0.0 #rad
@@ -95,21 +95,25 @@ for i in range(0,time_steps+1):
     Xtru = rob.vel_motion_model(Ut, Xtru, Fx, noise=1)
     Zt, ct = rob.model_sensor(Xtru, Mtr, fov, noise=1)
 
-    Yt = slam.fast_slam(Yp, Ut, Zt, ct)
+    Yt, max_weight_ind = slam.fast_slam(Yp, Ut, Zt, ct)
 
-#     #break up Yt
-#     Xhat = Yt[:,0]
-#     Mhat = Yt[:,1]
-#     Sig_hat = Yt[:,2]
-#     X_hist = np.mean(Xhat, axis=1)
-#     xhat_hist.append(X_hist)
-#     # marker_hist.append(Mu[3:2*N+3])
-#     # sig_hist.append(Sig)
-#     xtr_hist.append(Xtru[0:3])
-#     t_hist.append(t)
-#     # z_hist.append(Zt)
+    print('i = ', i)
+
+    # #break up Yt
+    # for j in range(0,len(Yt)):
+    #     Xhat.append(Yt[i][0])
+    #     Mhat.append(Yt[i][1])
+    #     Sig_hat.append(Yt[i][2])
+
+    Y_new = Yt[max_weight_ind];
+    xhat_hist.append(Y_new[0])
+    marker_hist.append(Y_new[1])
+    sig_hist.append(Y_new[2])
+    xtr_hist.append(Xtru[0:3])
+    t_hist.append(t)
+    # z_hist.append(Zt)
+
+    Yp = Yt
 #
-#     Yp = Yt
-#
-# viz.plotting(xhat_hist, sig_hist, xtr_hist, t_hist)# marker_hist
-# # viz.animator(xtr_hist, xhat_hist, sig_hist, marker_hist, time_steps)
+viz.plotting(xhat_hist, sig_hist, xtr_hist, marker_hist, t_hist)
+viz.animator(xtr_hist, xhat_hist, sig_hist, marker_hist, time_steps)

@@ -86,13 +86,14 @@ class Slam:
         # make weights vector and normalize
         w_new = np.array(w_new)
         wp_norm = self.normalize(w_new)
-        # weight_sum = sum(np.squeeze(w_new))
-        # wp_norm = np.squeeze(w_new) / np.squeeze(weight_sum)
+        weight_sum = sum(np.squeeze(w_new))
+        wp_norm = np.squeeze(w_new) / np.squeeze(weight_sum)
+        max_weight_ind = np.argmax(wp_norm)
         # for k in range(self.particles):
         Yt = utils.low_var_sampler(Y_new, wp_norm)
 
         # Yt = np.array(Yp)
-        return(Yt)
+        return(Yt, max_weight_ind)
     #
 
     def meas_jacobian(self, Xt, Muj):

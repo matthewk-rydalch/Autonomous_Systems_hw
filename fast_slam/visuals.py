@@ -37,9 +37,10 @@ class Visualizer:
         self.ycov = np.zeros((self.time_len,self.marker_len, elipse_points))
         for k in range(self.time_len):
             sig_end = sig_hist[k]
-            sig_mark = sig_end[3:len(sig_end)].T
-            sig_mark = sig_mark[3:len(sig_mark)].T
+            sig_mark = sig_end[0:len(sig_end)]
+            sig_mark = sig_mark[0:len(sig_mark)]
             for i in range(self.marker_len):
+                set_trace()
                 cov_mark = np.array([[sig_mark[2*i][2*i], sig_mark[2*i][2*i+1]],[sig_mark[2*i+1][2*i],sig_mark[2*i+1][2*i+1]]])
                 U, S, vh = np.linalg.svd(cov_mark) #don't need vh
                 S = np.diag(S)
@@ -51,10 +52,10 @@ class Visualizer:
                 self.ycov[k][i] = elps[1,:]+m_hist[k][2*i+1]
 
 
-        
+
         fig = plt.figure()
         plt.axes(xlim=(self.xgrid), ylim=(self.ygrid))
-        
+
         ###static plots###
         plt.plot(self.xhat,self.yhat, 'y')
         plt.plot(self.xtru, self.ytru, 'b')
@@ -93,7 +94,7 @@ class Visualizer:
                             init_func=init, frames = self.time_len, interval = 20, blit=True)
         plt.show()
 
-    def plotting(self, Mu, Sig, Xtru, t):#m_hist, t):
+    def plotting(self, Mu, Sig, Xtru, m_hist, t):
 
         #unpack variables
         x_hat = np.array(Mu)[:,0]
@@ -101,11 +102,11 @@ class Visualizer:
         th_hat = np.array(Mu)[:,2]
         sig_x = np.array(Sig)[:,0,0]
         sig_y = np.array(Sig)[:,1,1]
-        sig_th = np.array(Sig)[:,2,2]
+        # sig_th = np.array(Sig)[:,2,2]
         xt = np.array(Xtru)[:,0]
         yt = np.array(Xtru)[:,1]
         tht = np.array(Xtru)[:,2]
-        # m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
+        m_hist = np.reshape(np.squeeze(np.array(m_hist)),(len(m_hist),len(self.Mtr),2))
 
 
         #get error
@@ -114,13 +115,13 @@ class Visualizer:
         the = th_hat - tht
 
 
-        #calculate upper and lower bounds for covariance plot
-        sigx_hi = 2*np.sqrt(sig_x)
-        sigx_lo = -2*np.sqrt(sig_x)
-        sigy_hi = 2*np.sqrt(sig_y)
-        sigy_lo = -2*np.sqrt(sig_y)
-        sigth_hi = 2*np.sqrt(sig_th)
-        sigth_lo = -2*np.sqrt(sig_th)
+        # #calculate upper and lower bounds for covariance plot
+        # sigx_hi = 2*np.sqrt(sig_x)
+        # sigx_lo = -2*np.sqrt(sig_x)
+        # sigy_hi = 2*np.sqrt(sig_y)
+        # sigy_lo = -2*np.sqrt(sig_y)
+        # sigth_hi = 2*np.sqrt(sig_th)
+        # sigth_lo = -2*np.sqrt(sig_th)
 
         #subplots for states vs. time
         fig1, aXk = plt.subplots(3)
@@ -150,7 +151,7 @@ class Visualizer:
         # aXk[i].legend(loc = "upper right")
         # aXk[i].set_xlabel('time(s)')
         # fig2.show()
-        
+
         # fig2, aXk = plt.subplots(3)
         # fig2.suptitle("Covariance & Error vs. Time")
         # aXk[0].plot(t,xe, label="x error [m]")
