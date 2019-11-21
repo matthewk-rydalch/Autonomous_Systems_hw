@@ -37,10 +37,16 @@ class Slam:
              [0, self.sig_phi**2]])
     #
 
-    def fast_slam(self, Yp, Ut, Zt, ct):
+    def fast_slam(self, Yp, Ut, Zt, ct, time_step):
         #initialize variables to hold particles before resampling
-        w_new = []
         Y_new = []
+        w_new = []
+        # if len(ct) == 0:
+        #     a=1
+        if len(ct) == 0:
+            j = 1
+        else:
+            j = ct[time_step%len(ct)]# j is the landmarker being observed this time step
 
         ###for each particle
         for k in range(self.particles):
@@ -48,57 +54,55 @@ class Slam:
             #break out parts of Yp for kth particle
             Xp, Mup, Sig_p = self.retrieve(Yp, k)
 
-            #propogate pose (sample pose line 4 in algorithm?)
-            Xt = self.g(Ut, Xp, Fx = np.eye(3,3), noise=0)
-
-            # if k == 999:
-            #     a = 1
+            #propogate pose (sample pose line 4 in algorithm)
+            Xt = self.g(Ut, Xp, Fx = np.eye(3,3), noise=1)
 
             ###for each marker
             # set the new mu to the old, and then change those that are seen
-            muk = Mup
+            Muk = Mup
             Sig_k = Sig_p
-            wj = np.zeros(len(ct))
-            for j in ct:
                 
-                if self.j[j]==0:  #initialize marker if it has not been seen already
+            if self.j[j]==0:  #initialize marker if it has not been seen already
 
-                    self.j[j]=1 #variable used to tell if already initialized
-                    muk[j] = self.initialize_marker(Zt[:,j], Xt) #h**-1
-                    H = self.meas_jacobian(Xt, muk[j]) #h prime
-                    Sig_k[j] = inv(H)@self.Qt@inv(H).T
-                    wj[j] = np.array([[self.p0]]) #default importance weight
-                else:
-                    zhat, c_ignore = self.h(Xt, np.array([Mup[j]]), fov = 360, noise = 0) #for this leave the fov at 360.  Markers are already canceled out by ct
-                    H = self.meas_jacobian(Xt, Mup[j]) #h prime
-                    Q = H@Sig_p[j]@H.T+self.Qt
-                    K = Sig_p[j]@H.T@inv(Q)
-                    muk[j] = Mup[j] + K@(Zt[:,j]-np.squeeze(zhat))
-                    Sig_k[j] = (np.eye(2)-K@H)@Sig_p[j]
-                    wj[j] = np.linalg.det(2*np.pi*Q)**(-1/2)*np.exp(-1/2*(Zt[:,j]-zhat.T)@inv(Q)@(Zt[:,j]-zhat.T).T)
-            wj = self.normalize(wj)
-            wk = np.prod(wj)
-            Yk = np.array([Xt[:,0], muk, Sig_k])
+                self.j[j]=1 #variable used to tell if already initialized
+                Muk[j] = self.initialize_marker(Zt[:,j], Xt) #h**-1
+                H = self.meas_jacobian(Xt, Muk[j]) #h prime
+                Sig_k[j] = np.array(inv(H)@self.Qt@inv(H).T)
+                wj = np.array([[self.p0]]) #default importance weight
+            else:
+                zhat, c_ignore = self.h(Xt, Mup[j], fov = 360, noise = 0) #for this leave the fov at 360.  Markers are already canceled out by ct
+                H = self.meas_jacobian(Xt, Mup[j]) #h prime
+                Q = H@Sig_p[j]@H.T+self.Qt
+                K = Sig_p[j]@H.T@inv(Q)
+                Muk[j] = Mup[j] + K@(Zt[:,j]-np.squeeze(zhat))
+                Sig_k[j] = (np.eye(2)-K@H)@Sig_p[j]
+                wj = np.linalg.det(2*np.pi*Q)**(-1/2)*np.exp(-1/2*(Zt[:,j]-zhat.T)@inv(Q)@(Zt[:,j]-zhat.T).T)
 
-            Y_new.append(Yk)
-            w_new.append(wk)
-
-        Y_new = np.array(Y_new)
-        # make weights vector and normalize
-        w_new = np.array(w_new)
+            Y_new.append([Xt, Muk, Sig_k])
+            w_new.append(wj)
         wp_norm = self.normalize(w_new)
-        # weight_sum = sum(np.squeeze(w_new))
-        # wp_norm = np.squeeze(w_new) / np.squeeze(weight_sum)
-        # for k in range(self.particles):
-        Yt = utils.low_var_sampler(Y_new, wp_norm)
 
-        # Yt = np.array(Yp)
-        return(Yt)
+        # # make weights vector and normalize
+        # w_new = np.array(w_new)
+        # weight_sum = sum(np.squeeze(w_new))
+        # print('weight sum = ', weight_sum)
+        # wp_norm = np.squeeze(w_new) / np.squeeze(weight_sum)
+        max_weight_ind = np.argmax(wp_norm)
+        Yt = utils.low_var_sampler(Y_new, wp_norm)
+        # if Yt[0][0][0] == Yt[1][0][0]:
+        #     print('possible particle deprevation issue')
+        #     Ya = np.array(Yt).T
+        #     print('X = ',Ya[0])
+        #     print('Mu = ',Ya[1])
+        #     print('Sig = ',Ya[2])
+        #     a =1
+
+        return(Yt, max_weight_ind)
     #
 
     def meas_jacobian(self, Xt, Muj):
-        delta = np.array([Muj[0]-Xt[0],\
-                Muj[1]-Xt[1]])
+        delta = np.array([Muj[0][0]-Xt[0],\
+                Muj[0][1]-Xt[1]])
         q = np.squeeze(delta.T@delta)
         H = 1/q*np.array([[np.sqrt(q)*delta[0], np.sqrt(q)*delta[1]],\
                          [-delta[1], delta[0]]])
@@ -115,7 +119,9 @@ class Slam:
         mujx = xt+rt*np.cos(phi_t+tht)
         mujy = yt+rt*np.sin(phi_t+tht)
 
-        return mujx, mujy
+        muj = np.array([mujx, mujy]).T
+
+        return muj
 
     def uniform_point_cloud(self, xgrid, ygrid, k):
 
@@ -132,7 +138,7 @@ class Slam:
     
     def retrieve(self, Yp, k):
         Ypk = Yp[k]
-        Xp = np.array([Ypk[0]]).T
+        Xp = Ypk[0]
         Mup = Ypk[1]
         Sig_p = Ypk[2]
 
@@ -141,6 +147,9 @@ class Slam:
     def normalize(self, w):
 
         weight_sum = sum(w)
+        # print('weight sum = ', weight_sum)
+        if weight_sum < 0:
+            print("weight sum too small")
         w_norm = np.squeeze(w) / np.squeeze(weight_sum)
 
         return w_norm
