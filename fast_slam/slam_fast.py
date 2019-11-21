@@ -43,7 +43,10 @@ class Slam:
         w_new = []
         # if len(ct) == 0:
         #     a=1
-        j = ct[time_step%len(ct)]# j is the landmarker being observed this time step
+        if len(ct) == 0:
+            j = 1
+        else:
+            j = ct[time_step%len(ct)]# j is the landmarker being observed this time step
 
         ###for each particle
         for k in range(self.particles):
