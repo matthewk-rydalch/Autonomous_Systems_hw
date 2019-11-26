@@ -23,18 +23,21 @@ walls(N+1,2:N+1) = 1;
 walls(2:N+1,N+1) = 1;
 
 % Create single obstacle
-obs1(20:40,30:80) = 1;
-obs1(10:20,60:65) = 1;
+% obs1(20:40,30:80) = 1; %created by dr. Mclain
+% obs1(10:20,60:65) = 1;
+obs1(10:30,30:40) = 1; %created by me
+obs1(10:15,20:65) = 1;
 
 % Another obstacle
-obs2(45:65,10:45) = 1;
+% obs2(45:65,10:45) = 1; %dr. mclains
+obs2(25:65,10:30) = 1; %mine
 
 % Another obstacle
-obs3(43:92,75:85) = 1;
-obs3(70:80,50:75) = 1;
+obs3(33:92,88:85) = 1;
+obs3(50:80,50:65) = 1;
 
 % The goal states
-goal(75:80,96:98) = 1;
+goal(35:45,48:52) = 1;
 
 % Put walls and obstacles into map
 map = walls + obs1 + obs2 + obs3 + goal;

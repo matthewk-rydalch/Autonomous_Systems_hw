@@ -36,7 +36,7 @@ class MDP:
         #vhat is an nxm matrix
         n = vhat.shape[0]
         m = vhat.shape[1]
-        #set one (no uncertainty)
+        #step one (no uncertainty)
         vn = vhat[2:n-1,1:m-1]
         ve = vhat[1:n-1,2:m-1]
         vs = vhat[1:n-2,1:m-1]
@@ -64,20 +64,18 @@ class MDP:
         j = 0
         path = [x0]
         xt = x0
-        while vhat[xt[0]][xt[1]]<r_goal-100 and j < 100:
-            if policy[xt[0],xt[1]] == 0:
+        while vhat[xt[0]][xt[1]]<r_goal and j < 10000:
+            if policy[xt[1],xt[0]] == 0:
                 ut = np.array([0,1])
-            elif policy[xt[0],xt[1]] == 1:
+            elif policy[xt[1],xt[0]] == 1:
                 ut = np.array([1,0])
-            elif policy[xt[0],xt[1]] == 2:
+            elif policy[xt[1],xt[0]] == 2:
                 ut = np.array([0,-1])
-            elif policy[xt[0],xt[1]] == 3:
+            elif policy[xt[1],xt[0]] == 3:
                 ut = np.array([-1,0])
-            
+
             xt = xt+ut
             path.append(xt)
             j = j+1
-            print(j)
+
         return path
-
-
