@@ -17,6 +17,8 @@ from pomdp import POM
 
 ###parameters###
 T = 2 #planning horizon, 2 comes from problem statement 2
+#include probabillities
+
 
 #instatiate objects
 pom = POM()
