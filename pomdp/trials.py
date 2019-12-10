@@ -12,43 +12,25 @@ class Trial:
         self.p_z2_x1 = p[6]
         self.p_z2_x2 = p[7]
 
-    def tri(self, seg):
+    def tri(self, seg, state, bel):
 
-        # intersects = self.find_intersections(seg)
         ut = 3
-        state = np.random.randint(1, 2)
-        bel = 0.5
         while ut == 3:
             bel = self.measure(state, bel)
-            ut, bel, state = self.act(state, bel, seg)
+            ut, state, bel = self.act(state, bel, seg)
 
         if state == 1 and ut == 1:
-            final_state = 'lava'
+            final_state = 'lava!!!!!!'
         elif state == 1 and ut == 2:
             final_state = 'door'
         elif state == 2 and ut == 1:
             final_state = 'door'
         elif state == 2 and ut == 2:
-            final_state = 'lava'
+            final_state = 'lava!!!!!!!'
         else:
             final_state = 'something went wrong'
 
         return final_state
-
-    # def find_intersections(self, seg):
-    #     #get every combination of seg lines
-    #     ind = range(len(seg))
-    #     perms = np.array(list(itls.permutations(ind, 2)))
-    #     reps = np.array([list(ind[:]), list(ind[:])]).T
-    #     perms = np.concatenate([perms, reps])
-    #
-    #     # ints = np.array(v_z1[perms[:, 0]] + v_z2[perms[:, 1]])
-    #
-    #     # np.argmax(seg[:,1]) #highest value at p1 = 0
-    #     # dx = 0.0001
-    #     # P = np.array([np.arange(1.0 / dx) * dx, 1.0 - np.arange(1.0 / dx) * dx])
-    #     # points = seg @ P
-    #     # seg = seg[ind, :]
 
     def measure(self, state, bel):
 
@@ -78,7 +60,7 @@ class Trial:
         size = len(seg)
         line_prob = []
         for i in range(size):
-            line_prob.append(sum(seg[i]*bel))
+            line_prob.append(seg[i][0]*bel+seg[i][1]*(1-bel))
         ui = np.argmax(line_prob)
         ut = ui + 1
 

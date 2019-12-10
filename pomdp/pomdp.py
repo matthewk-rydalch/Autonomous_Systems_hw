@@ -79,5 +79,3 @@ class POM:
             seg = seg[ind,:]
 
         return seg
-
-
