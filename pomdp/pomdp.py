@@ -1,21 +1,83 @@
 import numpy as np
+import itertools as itls
 
 class POM:
-    def __init__():
 
-    def value_function(T):
-        G = np.zeros((1,n)) #how big? 
-        for tau in range(1,T): #check this range when you understand the horizon.  Should it be 1 or 0
-            Gp = zeros(()) #how big?
-            for u in ut: #all control actions u
-                for z in zt: #all measurments z
-                    for j in range(1,N):
-                        v[u][z][j] = np.sum(v[i]*p(z|xi)*p(xi|u,xj) #what are the k superscripts on the v's.  What are the other elements values of v[i] (3d)
+    def __init__(self, r, p, pruning):
+        self.r_x1_u1 = r[0]
+        self.r_x1_u2 = r[1]
+        self.r_x2_u1 = r[2]
+        self.r_x2_u2 = r[3]
+        self.r_x1_u3 = r[4]
+        self.r_x2_u3 = r[5]
+        self.p_x12_u3 = p[0]  # probability control u3 worked
+        self.p_x11_u3 = p[1]
+        self.p_x21_u3 = p[2]
+        self.p_x22_u3 = p[3]
+        self.p_z1_x1 = p[4]
+        self.p_z1_x2 = p[5]
+        self.p_z2_x1 = p[6]
+        self.p_z2_x2 = p[7]
+        self.pruning = pruning
 
-            for u in ut:
-                for k = np.ones(len(k)):np.ones(len(k))*abs(G): #need to modify the syntax
-                    for i in range(1,N):
-                        vp[i] = g*(r(xi,u)+sum(v[u][z][i])) #what is the function r?  v has a superscript k(z)?
-                    Gp[] = [u,vp] #adding (u:v'1, v'2, ...) to Gp
+    def value_function(self, T):
+        seg = np.zeros((3, 2))
+        for i in range(T):
+            seg = self.sense(seg)
+            seg = self.prune(seg)
+            seg = self.predict(seg)
+            seg = self.prune(seg)
+
+        return seg
+
+    def sense(self, seg):
+
+        #gather probabilties of measurements
+        n = len(seg[0])
+        p_z1 = np.zeros((n, 2))
+        p_z2 = np.zeros((n, 2))
+        p_z1[0, 0] = self.p_z1_x1
+        p_z1[1, 1] = self.p_z1_x2
+        p_z2[1, 1] = self.p_z2_x2
+        p_z2[0, 0] = self.p_z2_x1
+
+        #get inidividual measurement components of value function
+        v_z1 = seg@p_z1
+        v_z2 = seg@p_z2
+
+        #get every combination of V_z1 and V_z2
+        ind = range(len(v_z1))
+        perms = np.array(list(itls.permutations(ind, 2)))
+        reps = np.array([list(ind[:]), list(ind[:])]).T
+        perms = np.concatenate([perms, reps])
+
+
+        seg = np.array(v_z1[perms[:, 0]]+v_z2[perms[:, 1]])
+
+
+        return seg
+
+    def predict(self, seg):
+
+        P_prop = np.array([[self.p_x11_u3, self.p_x12_u3],
+                           [self.p_x21_u3, self.p_x22_u3]])
+        payoff_u1 = np.array([[self.r_x1_u1, self.r_x1_u2]])
+        payoff_u2 = np.array([[self.r_x2_u1, self.r_x2_u2]])
+
+        size = seg.shape
+        seg = seg@P_prop-np.ones(size)
+        seg = np.concatenate([payoff_u1, payoff_u2, seg])
+
+        return seg
+
+    def prune(self, seg):
+
+        if self.pruning == 1:
+            dx = 0.0001
+            P = np.array([np.arange(1.0/dx)*dx, 1.0-np.arange(1.0/dx)*dx])
+            ind = np.unique(np.argmax(seg@P, axis=0))
+            seg = seg[ind,:]
+
+        return seg
 
 
